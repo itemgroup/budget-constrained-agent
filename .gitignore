@@ -1,0 +1,57 @@
+# ===== 密钥与环境变量（绝不提交）=====
+.env
+.env.*
+!.env.example
+*.key
+*.pem
+
+# ===== 虚拟环境 =====
+budget_agent_env/
+venv/
+env/
+.venv/
+
+# ===== Python 缓存 =====
+__pycache__/
+*.py[cod]
+*$py.class
+
+# ===== 打包与构建产物 =====
+build/
+dist/
+*.egg-info/
+.eggs/
+
+# ===== 测试与静态检查缓存 =====
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+htmlcov/
+.tox/
+.nox/
+
+# ===== Jupyter =====
+.ipynb_checkpoints/
+
+# ===== Chroma 向量知识库 =====
+kb_chroma/
+
+# ===== 实验输出 =====
+experiments/results/*.csv
+
+# ===== 日志 =====
+*.log
+logs/
+
+# ===== IDE / 编辑器 =====
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
