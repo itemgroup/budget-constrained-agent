@@ -1,2 +1,60 @@
 # Simulated service price, quality, failure probability table
-# TODO: define services
+# 数据来源: docs/proposal.md 3.2 节（价格、质量分、失败概率均与文档一致）
+# 说明: 当前 ServiceRegistry 使用 src/service_registry.py 中的内置默认服务；
+#       本文件为后续配置化加载预留（接入 pyyaml 后统一改为从本文件加载，待确认）。
+services:
+  - name: basic_search
+    service_type: Search
+    cost_per_call: 0.01
+    quality_score: 0.7
+    failure_probability: 0.05
+    description: Low-cost basic web search service
+
+  - name: premium_search
+    service_type: Search
+    cost_per_call: 0.05
+    quality_score: 0.9
+    failure_probability: 0.02
+    description: High-quality premium web search service
+
+  - name: simple_parser
+    service_type: Document Parsing
+    cost_per_call: 0.02
+    quality_score: 0.6
+    failure_probability: 0.05
+    description: Low-cost simple document parser
+
+  - name: advanced_parser
+    service_type: Document Parsing
+    cost_per_call: 0.08
+    quality_score: 0.85
+    failure_probability: 0.03
+    description: High-quality advanced document parser
+
+  - name: small_llm
+    service_type: LLM Reasoning
+    cost_per_call: 0.10
+    quality_score: 0.7
+    failure_probability: 0.04
+    description: Small LLM reasoning service
+
+  - name: large_llm
+    service_type: LLM Reasoning
+    cost_per_call: 0.50
+    quality_score: 0.9
+    failure_probability: 0.01
+    description: Large LLM reasoning service
+
+  - name: template_report
+    service_type: Report Generation
+    cost_per_call: 0.05
+    quality_score: 0.65
+    failure_probability: 0.03
+    description: Template-based report generation
+
+  - name: custom_report
+    service_type: Report Generation
+    cost_per_call: 0.20
+    quality_score: 0.9
+    failure_probability: 0.02
+    description: Customized high-quality report generation
