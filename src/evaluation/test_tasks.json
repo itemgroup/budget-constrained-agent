@@ -1,1 +1,25 @@
-[]
+{
+  "budget_tiers": { "high": 1.0, "medium": 0.5, "low": 0.25 },
+  "tasks": [
+    { "id": "T01", "source": "custom", "category": "information_gathering", "task": "调研2025年新能源汽车市场趋势并分析主要驱动因素" },
+    { "id": "T02", "source": "custom", "category": "information_gathering", "task": "检索三家主要竞争对手的定价策略并分析差异" },
+    { "id": "T03", "source": "custom", "category": "information_gathering", "task": "调研远程办公工具的企业采用情况并分析优缺点" },
+    { "id": "T04", "source": "custom", "category": "information_gathering", "task": "搜索云计算行业最新安全合规要求并分析其影响" },
+    { "id": "T05", "source": "custom", "category": "information_gathering", "task": "调研目标客户行业的采购决策流程并分析关键角色" },
+    { "id": "T06", "source": "custom", "category": "document_summarisation", "task": "解析季度财报文档并生成摘要报告" },
+    { "id": "T07", "source": "custom", "category": "document_summarisation", "task": "解析员工手册文档，生成入职培训摘要报告" },
+    { "id": "T08", "source": "custom", "category": "document_summarisation", "task": "解析供应商合同文档并生成风险摘要报告" },
+    { "id": "T09", "source": "custom", "category": "document_summarisation", "task": "解析客户反馈文档，生成问题汇总报告" },
+    { "id": "T10", "source": "custom", "category": "document_summarisation", "task": "解析项目周报文档并生成进度摘要报告" },
+    { "id": "T11", "source": "custom", "category": "multi_document_comparison", "task": "解析两份产品方案文档，分析差异并生成对比报告" },
+    { "id": "T12", "source": "custom", "category": "multi_document_comparison", "task": "解析三家供应商报价文档，分析性价比并生成推荐报告" },
+    { "id": "T13", "source": "custom", "category": "multi_document_comparison", "task": "解析上半年与下半年销售文档，分析变化趋势并生成对比报告" },
+    { "id": "T14", "source": "custom", "category": "multi_document_comparison", "task": "解析两个版本的需求文档，分析变更点并生成差异报告" },
+    { "id": "T15", "source": "custom", "category": "multi_document_comparison", "task": "解析多份竞品白皮书文档，分析各自优势并生成对比报告" },
+    { "id": "T16", "source": "custom", "category": "business_report", "task": "调研行业数据，分析市场机会并生成季度业务报告" },
+    { "id": "T17", "source": "custom", "category": "business_report", "task": "调研客户反馈，分析满意度问题并生成改进报告" },
+    { "id": "T18", "source": "custom", "category": "business_report", "task": "调研运营数据，分析成本结构并生成优化建议报告" },
+    { "id": "T19", "source": "custom", "category": "business_report", "task": "调研销售渠道表现，分析转化率并生成月度业务报告" },
+    { "id": "T20", "source": "custom", "category": "business_report", "task": "调研供应链风险，分析薄弱环节并生成应对报告" }
+  ]
+}
