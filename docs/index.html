@@ -1,0 +1,1058 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Budget Agent · 预算约束自主智能体</title>
+<style>
+  :root {
+    --bg: #f5f5f7; --card: #ffffff; --text: #1d1d1f; --sub: #6e6e73;
+    --accent: #0071e3; --green: #34c759; --orange: #ff9f0a; --red: #ff3b30;
+    --purple: #af52de; --line: #d2d2d7; --radius: 18px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Display",
+      "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ===== 导航（仿 apple.com 毛玻璃居中导航） ===== */
+  nav {
+    position: sticky; top: 0; z-index: 50;
+    background: rgba(251,251,253,.72);
+    backdrop-filter: saturate(180%) blur(20px);
+    -webkit-backdrop-filter: saturate(180%) blur(20px);
+    border-bottom: 1px solid rgba(0,0,0,.08);
+  }
+  .nav-inner {
+    max-width: 1024px; margin: 0 auto; height: 48px;
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 22px; position: relative;
+  }
+  .brand {
+    position: absolute; left: 22px; top: 50%; transform: translateY(-50%);
+    font-size: 15px; font-weight: 700; letter-spacing: -.01em;
+  }
+  .brand span { color: var(--sub); font-weight: 400; font-size: 12px; margin-left: 6px; }
+  .nav-links { display: flex; gap: 4px; overflow-x: auto; }
+  .nav-links a {
+    font-size: 12px; color: var(--text); padding: 6px 12px;
+    border-radius: 980px; white-space: nowrap; transition: background .2s;
+  }
+  .nav-links a:hover { background: rgba(0,0,0,.05); text-decoration: none; }
+  .nav-links a.cur { color: var(--accent); font-weight: 600; }
+
+  .wrap { max-width: 1024px; margin: 0 auto; padding: 0 22px 20px; }
+  .view { display: none; }
+  .view.active { display: block; animation: fadein .35s ease; }
+  @keyframes fadein { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; } }
+
+  /* ===== Hero ===== */
+  .hero { text-align: center; padding: 72px 0 30px; }
+  .eyebrow {
+    font-size: 14px; font-weight: 600; letter-spacing: .12em;
+    color: var(--sub); text-transform: uppercase;
+  }
+  .hero h1 {
+    font-size: clamp(44px, 8vw, 80px); font-weight: 700;
+    letter-spacing: -.03em; line-height: 1.05; margin-top: 14px;
+  }
+  .grad {
+    background: linear-gradient(92deg, #0071e3 0%, #af52de 55%, #ff375f 100%);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero .sub { color: var(--sub); font-size: clamp(17px, 2.4vw, 22px); margin-top: 16px; }
+
+  .spec-strip {
+    display: flex; justify-content: center; gap: 0; flex-wrap: wrap;
+    margin: 36px auto 8px; max-width: 860px;
+  }
+  .spec { padding: 14px 34px; text-align: center; }
+  .spec + .spec { border-left: 1px solid var(--line); }
+  .spec .v { font-size: 30px; font-weight: 700; letter-spacing: -.02em; }
+  .spec .k { font-size: 12px; color: var(--sub); margin-top: 2px; }
+
+  /* ===== 分区入口网格 ===== */
+  .section-title {
+    font-size: clamp(28px, 4.5vw, 40px); font-weight: 700;
+    letter-spacing: -.02em; text-align: center; padding: 56px 0 8px;
+  }
+  .section-sub { text-align: center; color: var(--sub); font-size: 16px; margin-bottom: 28px; }
+  .tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+  .tile {
+    display: block; border-radius: 30px; padding: 44px 36px;
+    min-height: 240px; background: var(--card);
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    transition: transform .25s ease, box-shadow .25s ease;
+    color: var(--text); overflow: hidden; position: relative;
+  }
+  .tile:hover { transform: scale(1.02); box-shadow: 0 12px 40px rgba(0,0,0,.12); text-decoration: none; }
+  .tile.wide { grid-column: 1 / -1; min-height: 280px; }
+  .tile.dark { background: #000; color: #f5f5f7; }
+  .tile.blue { background: linear-gradient(135deg, #0071e3, #40a0ff); color: #fff; }
+  .tile .t-eyebrow { font-size: 12px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; opacity: .65; }
+  .tile h3 { font-size: clamp(26px, 3.4vw, 36px); font-weight: 700; letter-spacing: -.02em; margin-top: 10px; }
+  .tile p { font-size: 15px; margin-top: 10px; opacity: .75; max-width: 420px; line-height: 1.55; }
+  .tile .go { display: inline-block; margin-top: 18px; font-size: 15px; font-weight: 600; }
+  .tile.dark .go, .tile.blue .go { color: #7ec1ff; }
+  .tile:not(.dark):not(.blue) .go { color: var(--accent); }
+  .tile .go::after { content: " ›"; }
+  .tile .bg-icon {
+    position: absolute; right: 28px; bottom: 20px; font-size: 90px;
+    opacity: .10; font-weight: 700; letter-spacing: -.04em; pointer-events: none;
+  }
+
+  /* ===== 通用卡片 / 表单 ===== */
+  .card {
+    background: var(--card); border-radius: var(--radius);
+    box-shadow: 0 4px 24px rgba(0,0,0,.06); padding: 28px; margin-top: 18px;
+  }
+  .card h2 { font-size: 22px; font-weight: 600; margin-bottom: 16px; letter-spacing: -.01em; }
+  label { display: block; font-size: 13px; color: var(--sub); margin: 18px 0 6px; }
+  textarea, select, input[type=number] {
+    width: 100%; font: inherit; font-size: 15px; padding: 12px 14px;
+    border: 1px solid var(--line); border-radius: 12px; background: #fff;
+    color: var(--text); outline: none; transition: border-color .2s, box-shadow .2s;
+  }
+  textarea:focus, select:focus, input:focus {
+    border-color: var(--accent); box-shadow: 0 0 0 4px rgba(0,113,227,.15);
+  }
+  textarea { resize: vertical; min-height: 68px; }
+  .row { display: flex; gap: 16px; flex-wrap: wrap; }
+  .row > div { flex: 1; min-width: 200px; }
+  .chips { display: flex; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+  .chip {
+    border: 1px solid var(--line); border-radius: 980px; padding: 6px 14px;
+    font-size: 13px; color: var(--sub); cursor: pointer; background: #fff; transition: all .2s;
+  }
+  .chip:hover { border-color: var(--accent); color: var(--accent); }
+  .budget-val { font-size: 28px; font-weight: 700; color: var(--accent); }
+  input[type=range] { width: 100%; accent-color: var(--accent); margin-top: 8px; }
+  .btn {
+    display: block; width: 100%; margin-top: 24px; padding: 14px;
+    background: var(--accent); color: #fff; font: inherit; font-size: 17px;
+    font-weight: 600; border: none; border-radius: 980px; cursor: pointer;
+    transition: transform .15s, background .2s;
+  }
+  .btn:hover { background: #0077ed; text-decoration: none; }
+  .btn:active { transform: scale(.98); }
+  .mock-note { text-align: center; font-size: 12px; color: var(--sub); margin-top: 10px; }
+  .empty { color: var(--sub); font-size: 14px; line-height: 1.7; }
+  .empty code {
+    background: #f5f5f7; border: 1px solid var(--line); border-radius: 6px;
+    padding: 2px 8px; font-size: 13px; color: var(--text);
+  }
+  .page-head { text-align: center; padding: 56px 0 6px; }
+  .page-head h1 { font-size: clamp(32px, 5vw, 48px); font-weight: 700; letter-spacing: -.025em; }
+  .page-head p { color: var(--sub); font-size: 16px; margin-top: 10px; }
+
+  /* ===== 运行结果 ===== */
+  #result, #cResult, #tResult { display: none; }
+  .banner {
+    display: inline-block; padding: 8px 18px; border-radius: 980px;
+    font-size: 15px; font-weight: 600; color: #fff;
+  }
+  .banner.completed { background: var(--green); }
+  .banner.budget_exhausted { background: var(--orange); }
+  .banner.failed { background: var(--red); }
+  .term-reason { color: var(--sub); font-size: 14px; margin-top: 10px; }
+  .stats { display: flex; gap: 12px; margin-top: 18px; flex-wrap: wrap; }
+  .stat { flex: 1; min-width: 100px; text-align: center; }
+  .stat .v { font-size: 26px; font-weight: 700; }
+  .stat .k { font-size: 12px; color: var(--sub); margin-top: 4px; }
+  .bar { height: 8px; background: #e8e8ed; border-radius: 4px; margin-top: 18px; overflow: hidden; }
+  .bar > div {
+    height: 100%; background: var(--accent); border-radius: 4px;
+    width: 0; transition: width 1s cubic-bezier(.25,.1,.25,1);
+  }
+  .step { border-left: 3px solid var(--line); padding: 12px 0 12px 18px; margin-left: 6px; position: relative; }
+  .step::before {
+    content: ""; position: absolute; left: -7px; top: 18px;
+    width: 11px; height: 11px; border-radius: 50%; background: var(--line);
+  }
+  .step.s-ok { border-color: var(--green); } .step.s-ok::before { background: var(--green); }
+  .step.s-downgraded { border-color: var(--orange); } .step.s-downgraded::before { background: var(--orange); }
+  .step.s-insufficient_budget { border-color: var(--red); } .step.s-insufficient_budget::before { background: var(--red); }
+  .step .head { font-size: 15px; font-weight: 600; }
+  .step .meta { font-size: 13px; color: var(--sub); margin-top: 4px; }
+  .step .note { font-size: 12px; color: var(--sub); margin-top: 6px; line-height: 1.5; }
+  .tag {
+    display: inline-block; font-size: 11px; font-weight: 600; padding: 2px 8px;
+    border-radius: 6px; margin-left: 8px; vertical-align: middle;
+  }
+  .tag.ok { background: rgba(52,199,89,.12); color: #248a3d; }
+  .tag.downgraded { background: rgba(255,159,10,.14); color: #c93400; }
+  .tag.insufficient_budget { background: rgba(255,59,48,.12); color: var(--red); }
+  .tag.fail { background: rgba(255,59,48,.12); color: var(--red); }
+  .tag.over { background: rgba(255,59,48,.12); color: var(--red); }
+  .tag.mock { background: rgba(110,110,115,.12); color: var(--sub); }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; }
+  th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid #eee; }
+  th { color: var(--sub); font-size: 12px; font-weight: 600; white-space: nowrap; }
+  td.num { font-variant-numeric: tabular-nums; }
+  .table-scroll { overflow-x: auto; }
+  .out {
+    background: #f5f5f7; border-radius: 12px; padding: 14px 16px; margin-top: 10px;
+    font-size: 14px; line-height: 1.6;
+  }
+  .out .meta { color: var(--sub); font-size: 12px; margin-bottom: 6px; }
+
+  /* ===== 对比视图 ===== */
+  .agent-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 18px; }
+  .agent-card {
+    background: var(--card); border-radius: var(--radius); padding: 22px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06); border-top: 4px solid var(--line);
+    display: flex; flex-direction: column;
+  }
+  .agent-card.best { border-top-color: var(--green); }
+  .agent-card h3 { font-size: 16px; font-weight: 700; }
+  .agent-card .sub2 { font-size: 12px; color: var(--sub); margin-top: 4px; line-height: 1.5; }
+  .agent-card .big { font-size: 30px; font-weight: 700; margin-top: 14px; letter-spacing: -.02em; }
+  .agent-card .big small { font-size: 13px; color: var(--sub); font-weight: 400; }
+  .kv { font-size: 13px; margin-top: 12px; line-height: 2; color: var(--sub); }
+  .kv b { color: var(--text); font-weight: 600; }
+  .usage { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+  .usage .u {
+    font-size: 11px; background: #f5f5f7; border: 1px solid var(--line);
+    border-radius: 980px; padding: 3px 10px; color: var(--sub);
+  }
+  .succ-badge { font-size: 12px; font-weight: 700; margin-top: 12px; }
+  .succ-badge.y { color: #248a3d; } .succ-badge.n { color: var(--red); }
+  .chart {
+    display: flex; align-items: flex-end; gap: 20px; height: 200px;
+    padding: 12px 6px 0; border-bottom: 1px solid var(--line);
+  }
+  .col { flex: 1; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; height: 100%; min-width: 0; }
+  .col .val { font-size: 13px; font-weight: 600; margin-bottom: 6px; font-variant-numeric: tabular-nums; }
+  .col .bar-v {
+    width: 62%; max-width: 64px; border-radius: 8px 8px 0 0;
+    transition: height .9s cubic-bezier(.25,.1,.25,1);
+  }
+  .col .lab {
+    font-size: 12px; color: var(--sub); margin-top: 8px; text-align: center;
+    white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%;
+  }
+  .chart-note { font-size: 12px; color: var(--sub); margin-top: 10px; }
+
+  /* ===== 首页场景卡与报价单 ===== */
+  .mini-itin { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+  .mini-itin span {
+    font-size: 12px; font-weight: 600; padding: 6px 14px;
+    border-radius: 980px; background: rgba(255,255,255,.14);
+    border: 1px solid rgba(255,255,255,.3); letter-spacing: .02em;
+  }
+  .price-sheet { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-top: 4px; }
+  .ps-cat h4 {
+    font-size: 13px; font-weight: 700; padding-bottom: 8px;
+    border-bottom: 1px solid var(--line); margin-bottom: 8px;
+    display: flex; align-items: center; gap: 6px;
+  }
+  .ps-cat .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
+  .ps-item {
+    display: flex; align-items: baseline; gap: 6px;
+    font-size: 12px; padding: 6px 0; border-bottom: 1px dashed #eee;
+  }
+  .ps-item:last-child { border-bottom: none; }
+  .ps-item .nm {
+    flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; color: var(--sub);
+  }
+  .ps-item b { font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .ps-item .q { color: var(--sub); font-size: 11px; white-space: nowrap; }
+
+  /* ===== 服务目录 ===== */
+  .svc-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .svc-card {
+    background: var(--card); border-radius: var(--radius); padding: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,.06);
+    transition: transform .2s ease, box-shadow .2s ease;
+  }
+  .svc-card:hover { transform: translateY(-3px); box-shadow: 0 10px 32px rgba(0,0,0,.1); }
+  .svc-type {
+    display: inline-block; font-size: 11px; font-weight: 700; padding: 3px 10px;
+    border-radius: 980px; color: #fff;
+  }
+  .svc-card h3 { font-family: "SF Mono", ui-monospace, Menlo, Consolas, monospace; font-size: 17px; margin-top: 12px; }
+  .svc-card .desc { font-size: 13px; color: var(--sub); margin-top: 6px; line-height: 1.55; min-height: 40px; }
+  .svc-price { font-size: 26px; font-weight: 700; margin-top: 14px; letter-spacing: -.02em; }
+  .svc-price small { font-size: 13px; color: var(--sub); font-weight: 400; }
+  .q-row { display: flex; align-items: center; gap: 10px; margin-top: 12px; font-size: 12px; color: var(--sub); }
+  .q-row .tr { flex: 1; background: #e8e8ed; border-radius: 4px; height: 6px; overflow: hidden; }
+  .q-row .fl { height: 100%; border-radius: 4px; background: var(--accent); }
+  .fail-badge {
+    display: inline-block; margin-top: 12px; font-size: 11px; font-weight: 600;
+    padding: 3px 10px; border-radius: 6px; background: rgba(255,159,10,.14); color: #c93400;
+  }
+
+  /* ===== 实验数据 ===== */
+  .hbar { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 13px; }
+  .hbar .lb { width: 200px; text-align: right; color: var(--sub); flex-shrink: 0; font-size: 12px; }
+  .hbar .tr { flex: 1; background: #e8e8ed; border-radius: 6px; height: 18px; overflow: hidden; }
+  .hbar .fl { height: 100%; background: var(--accent); border-radius: 6px; transition: width .9s cubic-bezier(.25,.1,.25,1); }
+  .hbar .vl { width: 52px; font-variant-numeric: tabular-nums; font-weight: 600; font-size: 12px; }
+
+  /* ===== 关于：架构管道图 ===== */
+  .pipe { display: flex; align-items: stretch; justify-content: center; flex-wrap: wrap; gap: 0; margin-top: 10px; }
+  .node {
+    background: #fff; border: 1px solid var(--line); border-radius: 16px;
+    padding: 16px 18px; text-align: center; min-width: 148px;
+    box-shadow: 0 2px 12px rgba(0,0,0,.05);
+  }
+  .node .n-t { font-size: 14px; font-weight: 700; }
+  .node .n-d { font-size: 11px; color: var(--sub); margin-top: 6px; line-height: 1.5; }
+  .arrow { align-self: center; color: var(--sub); font-size: 18px; padding: 0 8px; }
+  .loop-note { text-align: center; font-size: 12px; color: var(--sub); margin-top: 14px; }
+  .graph-lanes {
+    display: flex; align-items: center; justify-content: center;
+    flex-wrap: wrap; margin-top: 16px;
+    background: #f5f5f7; border-radius: 14px; padding: 16px 10px;
+  }
+  .g-node {
+    font-size: 13px; font-weight: 700; color: #fff;
+    padding: 10px 16px; border-radius: 12px; white-space: nowrap;
+  }
+  .g-node.gt { background: #0071e3; }
+  .g-node.gs { background: #af52de; }
+  .g-node.gv { background: #34c759; }
+  .g-edge {
+    display: flex; flex-direction: column; align-items: center;
+    min-width: 130px; padding: 0 8px; font-size: 11px;
+    color: var(--sub); line-height: 1.5;
+  }
+  .g-edge .ln { color: #86868b; font-size: 13px; letter-spacing: -1px; white-space: nowrap; }
+  .feat-list { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 6px; }
+  .feat {
+    background: #f5f5f7; border-radius: 14px; padding: 16px 18px;
+    font-size: 13px; line-height: 1.6; color: var(--sub);
+  }
+  .feat b { display: block; color: var(--text); font-size: 14px; margin-bottom: 4px; }
+
+  /* ===== Mock 声明与部署卡（主页最下方） ===== */
+  .deploy-card { text-align: center; padding: 44px 28px; }
+  .deploy-card .mockline {
+    display: inline-block; font-size: 12px; font-weight: 700;
+    color: #c93400; background: rgba(255,159,10,.14);
+    padding: 4px 14px; border-radius: 980px; letter-spacing: .04em;
+  }
+  .deploy-card p { color: var(--sub); font-size: 14px; line-height: 1.8; max-width: 640px; margin: 14px auto 0; }
+  .deploy-card .btn { max-width: 300px; margin: 22px auto 0; }
+  .deploy-card .repo-link { display: inline-block; margin-top: 16px; font-size: 14px; }
+
+  /* ===== 页脚 ===== */
+  footer {
+    border-top: 1px solid var(--line); margin-top: 64px;
+    padding: 28px 0 40px; color: var(--sub); font-size: 12px;
+  }
+  .foot-cols { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+  .foot-cols h4 { font-size: 12px; color: var(--text); font-weight: 600; margin-bottom: 10px; }
+  .foot-cols div div { margin: 6px 0; }
+  .foot-cols a { color: var(--sub); }
+  .foot-base { border-top: 1px solid var(--line); margin-top: 22px; padding-top: 14px; line-height: 1.8; }
+
+  @media (max-width: 860px) {
+    .agent-grid { grid-template-columns: repeat(2, 1fr); }
+    .foot-cols { grid-template-columns: repeat(2, 1fr); }
+    .price-sheet { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 640px) {
+    .tiles, .svc-grid, .agent-grid, .feat-list, .price-sheet { grid-template-columns: 1fr; }
+    .nav-inner { justify-content: space-between; }
+    .brand { position: static; transform: none; }
+    .brand span { display: none; }
+    .hbar .lb { width: 110px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-inner">
+    <div class="brand">Budget Agent<span>COMP5511</span></div>
+    <div class="nav-links">
+      <a href="#/" data-route="">首页</a>
+      <a href="#/run" data-route="run">运行</a>
+      <a href="#/travel" data-route="travel">行程规划</a>
+      <a href="#/compare" data-route="compare">方案对比</a>
+      <a href="#/services" data-route="services">服务目录</a>
+      <a href="#/lab" data-route="lab">实验数据</a>
+      <a href="#/about" data-route="about">关于</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- ================= 首页 ================= -->
+  <section class="view" id="view-home">
+    <div class="hero">
+      <div class="eyebrow">COMP5511 · Budget-Constrained Autonomous Agent</div>
+      <h1>Budget Agent.<br><span class="grad">每一分钱，都在预算内。</span></h1>
+      <p class="sub">分解任务 · 感知预算 · 择优服务 · 失败自愈</p>
+    </div>
+
+    <div class="spec-strip">
+      <div class="spec"><div class="v">20</div><div class="k">测试任务</div></div>
+      <div class="spec"><div class="v">4</div><div class="k">对比方案</div></div>
+      <div class="spec"><div class="v">8</div><div class="k">模拟服务</div></div>
+      <div class="spec"><div class="v">3</div><div class="k">预算档位</div></div>
+      <div class="spec"><div class="v">2</div><div class="k">使用场景</div></div>
+    </div>
+
+    <h2 class="section-title">它能替你安排什么？</h2>
+    <p class="section-sub">同一套预算约束引擎，任何「要花钱的事」都能自主安排——也是全部功能的入口。</p>
+
+    <div class="tiles">
+      <a class="tile dark wide" href="#/travel">
+        <div class="t-eyebrow">Travel · 行程规划</div>
+        <h3>一趟旅行，交给 Agent 排。</h3>
+        <p>先查询实时报价再择优预订：商务舱还是经济舱、五星还是青旅，它按剩余预算自己拿主意；满房自动换一家，钱不够体面收场——每一分钱都在预算内。</p>
+        <div class="mini-itin">
+          <span>往返交通</span><span>住宿</span><span>3 日餐饮</span><span>体验活动 ×2</span>
+        </div>
+        <span class="go">规划一趟行程</span>
+        <div class="bg-icon">✈</div>
+      </a>
+      <a class="tile" href="#/run">
+        <div class="t-eyebrow">Enterprise · 企业任务</div>
+        <h3>$0.35 拿下一份报告。</h3>
+        <p>输入任务，实时观看完整决策链：分解、预算感知选服务、模拟执行、失败重规划，直到预算耗尽或任务完成。</p>
+        <span class="go">运行企业任务</span>
+        <div class="bg-icon">▣</div>
+      </a>
+      <a class="tile" href="#/compare">
+        <div class="t-eyebrow">Compare</div>
+        <h3>四种方案同台竞技。</h3>
+        <p>同一个任务、同一个随机种子：Standard、Minimum-Cost、Hard-Stop 与完整版 Proposed 谁更划算。</p>
+        <span class="go">开始对比</span>
+        <div class="bg-icon">⚖</div>
+      </a>
+      <a class="tile" href="#/services">
+        <div class="t-eyebrow">Services</div>
+        <h3>服务目录。</h3>
+        <p>8 个模拟服务的价格、质量分与失败率——智能体决策的全部依据。</p>
+        <span class="go">浏览目录</span>
+        <div class="bg-icon">$</div>
+      </a>
+      <a class="tile" href="#/lab">
+        <div class="t-eyebrow">Lab</div>
+        <h3>实验数据。</h3>
+        <p>基线对比、消融实验、多预算扫描、失败注入——批量实验结果速览。</p>
+        <span class="go">查看数据</span>
+        <div class="bg-icon">∑</div>
+      </a>
+      <a class="tile blue wide" href="#/about">
+        <div class="t-eyebrow">About · 更多场景</div>
+        <h3>花钱的事，都能排。</h3>
+        <p>五层解耦架构、依赖注入设计；企业采购、装修预算、广告投放——换一份选项目录，同一引擎原样复用。</p>
+        <span class="go">了解架构</span>
+        <div class="bg-icon">◈</div>
+      </a>
+    </div>
+
+    <!-- ===== Mock 声明 + 部署入口（主页最下方） ===== -->
+    <div class="card deploy-card">
+      <span class="mockline">STATIC MOCK · 本页为静态 Mock 演示</span>
+      <h2 style="margin-top:14px">所见结果为预置示例。</h2>
+      <p>
+        本页托管于 GitHub Pages，仅含静态 HTML/JS：运行结果、行程报价单与对比数据均为预置 Mock，
+        实验数据为本地批量实验的真实快照。完整功能（真实任务执行、DeepSeek LLM 分解与评分、图记忆持久化）
+        请按部署文档在本地运行完整版。
+      </p>
+      <a class="btn" href="https://github.com/itemgroup/budget-constrained-agent/blob/develop/docs/DEPLOYMENT.md" target="_blank" rel="noopener">立即部署 →</a>
+      <a class="repo-link" href="https://github.com/itemgroup/budget-constrained-agent" target="_blank" rel="noopener">GitHub 仓库：itemgroup/budget-constrained-agent</a>
+    </div>
+  </section>
+
+  <!-- ================= 运行（Mock） ================= -->
+  <section class="view" id="view-run">
+    <div class="page-head">
+      <h1>运行智能体 <span class="tag mock">Mock</span></h1>
+      <p>完整版 Proposed Agent：预算感知选择 + 动态重规划，全流程可视化。</p>
+    </div>
+
+    <div class="card">
+      <h2>运行任务</h2>
+      <label>任务描述</label>
+      <textarea id="task">调研行业数据，分析市场机会并生成季度业务报告</textarea>
+      <div class="row">
+        <div>
+          <label>总预算 <span class="budget-val">$0.50</span></label>
+          <input type="range" min="0.05" max="2.00" step="0.05" value="0.50" disabled>
+        </div>
+        <div>
+          <label>随机种子</label>
+          <input type="number" value="5" disabled>
+        </div>
+      </div>
+      <button class="btn" id="runBtn">查看示例结果</button>
+      <div class="mock-note">静态 Mock：表单仅供预览，点击按钮展示预置示例（$0.50 预算 · seed 5 的真实运行快照）。</div>
+    </div>
+
+    <div id="result">
+      <div class="card">
+        <h2>运行结果 <span class="tag mock">示例结果 · Mock</span></h2>
+        <span class="banner completed">已完成</span>
+        <div class="term-reason">所有子任务执行完毕</div>
+        <div class="stats">
+          <div class="stat"><div class="v">$0.35</div><div class="k">已消耗</div></div>
+          <div class="stat"><div class="v">$0.15</div><div class="k">剩余</div></div>
+          <div class="stat"><div class="v">3</div><div class="k">服务调用</div></div>
+          <div class="stat"><div class="v">3</div><div class="k">完成子任务</div></div>
+        </div>
+        <div class="bar"><div data-w="70"></div></div>
+      </div>
+      <div class="card"><h2>执行时间线</h2><div id="timeline"></div></div>
+      <div class="card"><h2>账本明细</h2><div class="table-scroll" id="ledger"></div></div>
+      <div class="card"><h2>子任务输出</h2><div id="outputs"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= 行程规划（Mock） ================= -->
+  <section class="view" id="view-travel">
+    <div class="page-head">
+      <h1>行程规划 <span class="tag mock">Mock</span></h1>
+      <p>先查实时报价，再按预算择优预订——满房自动换一家，绝不超支。</p>
+    </div>
+
+    <div class="card">
+      <h2>规划一趟行程</h2>
+      <label>行程描述</label>
+      <textarea>安排一趟 3 天的东京行程，体验优先</textarea>
+      <div class="row">
+        <div>
+          <label>总预算 <span class="budget-val">$1500</span></label>
+          <input type="range" min="200" max="2500" step="50" value="1500" disabled>
+        </div>
+        <div>
+          <label>随机种子</label>
+          <input type="number" value="42" disabled>
+        </div>
+      </div>
+      <button class="btn" id="travelBtn">查看示例行程</button>
+      <div class="mock-note">静态 Mock：展示「东京 3 日 · 体验优先」的预置示例（$1500 预算）。</div>
+    </div>
+
+    <div id="tResult">
+      <div class="card">
+        <h2>本次查询到的报价单 <span class="tag mock">示例报价 · Mock</span></h2>
+        <div class="price-sheet" id="priceSheet"></div>
+        <div class="chart-note">完整版中报价 = 基准价 ±15% 随机波动（随 seed 变化）；预订失败不扣费，Agent 会自动换一家或砍掉该环节。</div>
+      </div>
+      <div class="card">
+        <h2>规划结果</h2>
+        <span class="banner completed">已完成</span>
+        <div class="term-reason">所有子任务执行完毕（含 1 次满房重试）</div>
+        <div class="stats">
+          <div class="stat"><div class="v">$1325.00</div><div class="k">已预订花费</div></div>
+          <div class="stat"><div class="v">$175.00</div><div class="k">剩余</div></div>
+          <div class="stat"><div class="v">8</div><div class="k">预订操作</div></div>
+          <div class="stat"><div class="v">7</div><div class="k">确认预订</div></div>
+        </div>
+        <div class="bar"><div data-w="88.3"></div></div>
+      </div>
+      <div class="card"><h2>行程时间线</h2><div id="tTimeline"></div></div>
+      <div class="card"><h2>预订确认</h2><div id="tOutputs"></div></div>
+    </div>
+  </section>
+
+  <!-- ================= 方案对比（Mock） ================= -->
+  <section class="view" id="view-compare">
+    <div class="page-head">
+      <h1>方案对比 <span class="tag mock">Mock</span></h1>
+      <p>同一任务、同一随机种子，四种智能体策略的公平对决。</p>
+    </div>
+
+    <div class="card">
+      <h2>对比设置</h2>
+      <label>任务描述</label>
+      <textarea>调研行业数据，分析市场机会并生成季度业务报告</textarea>
+      <div class="row">
+        <div>
+          <label>参照预算 <span class="budget-val">$0.50</span></label>
+          <input type="range" min="0.05" max="2.00" step="0.05" value="0.50" disabled>
+        </div>
+        <div>
+          <label>随机种子</label>
+          <input type="number" value="42" disabled>
+        </div>
+      </div>
+      <button class="btn" id="compareBtn">查看示例对比</button>
+      <div class="mock-note">静态 Mock：展示同一任务在 $0.50 参照预算下四种方案的预置对比结果。</div>
+    </div>
+
+    <div id="cResult">
+      <div class="agent-grid" id="agentGrid"></div>
+      <div class="card">
+        <h2>实际开销对比</h2>
+        <div class="chart" id="chartSpent"></div>
+        <div class="chart-note">参照预算 $0.50；Standard 内部无预算约束（$999），超支以参照预算标记。</div>
+      </div>
+      <div class="card">
+        <h2>LLM-Judge 综合质量对比</h2>
+        <div class="chart" id="chartJudge"></div>
+        <div class="chart-note">综合分 = 0.5 × 完整性 + 0.5 × 事实正确性（模拟评分器）。</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ================= 服务目录（真实配置数据） ================= -->
+  <section class="view" id="view-services">
+    <div class="page-head">
+      <h1>服务目录</h1>
+      <p>8 个模拟服务，覆盖检索、文档解析、LLM 推理与报告生成四个类别。</p>
+    </div>
+    <div class="svc-grid" id="svcGrid"></div>
+  </section>
+
+  <!-- ================= 实验数据（真实实验快照） ================= -->
+  <section class="view" id="view-lab">
+    <div class="page-head">
+      <h1>实验数据</h1>
+      <p>本地批量实验的真实快照（20 任务 × 3 预算档），以静态数据形式内嵌。</p>
+    </div>
+    <div id="labBody"></div>
+  </section>
+
+  <!-- ================= 关于 ================= -->
+  <section class="view" id="view-about">
+    <div class="page-head">
+      <h1>五层解耦架构</h1>
+      <p>每一层只做一件事，通过依赖注入与纯数据传递组合。</p>
+    </div>
+
+    <div class="card">
+      <h2>决策管道</h2>
+      <div class="pipe">
+        <div class="node"><div class="n-t">TaskPlanner</div><div class="n-d">任务分解<br>子任务 + 质量要求</div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="n-t">BudgetAwareSelector</div><div class="n-d">预算感知选服务<br>预算内最大化质量</div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="n-t">SimulatedServiceRunner</div><div class="n-d">模拟执行<br>按配置失败率随机失败</div></div>
+        <div class="arrow">→</div>
+        <div class="node"><div class="n-t">BudgetLedger</div><div class="n-d">记账<br>每笔开销可追溯</div></div>
+      </div>
+      <div class="loop-note">失败 / 质量不足 → Replanner 动态重规划（RETRY / SKIP / ABORT）→ 回到管道继续执行</div>
+    </div>
+
+    <div class="card">
+      <h2>图记忆层（ExperienceGraph）</h2>
+      <div class="pipe">
+        <div class="node"><div class="n-t">Planner · 分解前</div><div class="n-d">lookup 查经验<br>相似命中 → 复用分解链<br>跳过 LLM，省 token</div></div>
+        <div class="arrow">⇄</div>
+        <div class="node"><div class="n-t">ExperienceGraph</div><div class="n-d">图结构长期记忆<br>JSON 持久化 · 读写锁<br>data/experience_graph.json</div></div>
+        <div class="arrow">⇄</div>
+        <div class="node"><div class="n-t">运行结束 · 回填</div><div class="n-d">成功步骤写入<br>服务使用统计<br>经验越攒越准</div></div>
+      </div>
+      <div class="graph-lanes">
+        <div class="g-node gt">task 节点</div>
+        <div class="g-edge"><span class="ln">─────▶</span>decomposed_to<span>有序分解链</span></div>
+        <div class="g-node gs">step 节点</div>
+        <div class="g-edge"><span class="ln">─────▶</span>served_by<span>质量 / 开销累计</span></div>
+        <div class="g-node gv">service 节点</div>
+      </div>
+      <div class="loop-note">三层节点对应三种角色：任务经验 → 步骤类型 → 服务表现；也是未来多 agent 共享黑板的地基</div>
+    </div>
+
+    <div class="card">
+      <h2>设计原则</h2>
+      <div class="feat-list">
+        <div class="feat"><b>依赖注入</b>编排器的 planner / selector / runner / replanner 全部构造函数注入，可自由替换为基线或消融变体。</div>
+        <div class="feat"><b>全局唯一账本</b>所有扣费只经过 BudgetLedger，预算约束在任何策略下都不会失效。</div>
+        <div class="feat"><b>零外部依赖前端</b>本页面为纯原生 HTML/CSS/JS 静态 Mock；完整版后端仅使用 Python 标准库 http.server。</div>
+        <div class="feat"><b>可复现</b>模拟执行器使用独立随机源，相同 seed 产生完全一致的失败模式。</div>
+        <div class="feat"><b>图结构记忆</b>task → step → service 经验图跨运行持久化；相似任务命中后分解阶段零 LLM 调用，直接省 token。</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2>评估体系（proposal 3.5）</h2>
+      <div class="feat-list">
+        <div class="feat"><b>效率指标</b>预算约束下任务成功率、平均模拟开销、超预算比例。</div>
+        <div class="feat"><b>工具使用</b>工具调用次数、冗余重复调用次数。</div>
+        <div class="feat"><b>LLM-Judge</b>输出完整性与事实正确性（0~1），支持模拟评分与 DeepSeek 真实评分。</div>
+        <div class="feat"><b>实验矩阵</b>4 基线 × 3 预算档 × 20 任务，外加消融与 1x/5x/10x 失败注入。</div>
+      </div>
+    </div>
+  </section>
+
+  <footer>
+    <div class="foot-cols">
+      <div>
+        <h4>项目</h4>
+        <div>COMP5511 课程项目</div>
+        <div>预算约束自主智能体</div>
+        <div>企业任务 / 行程规划场景</div>
+      </div>
+      <div>
+        <h4>核心模块</h4>
+        <div>TaskPlanner / LLMTaskPlanner</div>
+        <div>BudgetAwareSelector</div>
+        <div>SimulatedServiceRunner</div>
+        <div>Replanner / BudgetLedger</div>
+      </div>
+      <div>
+        <h4>实验</h4>
+        <div>基线对比（4 方案）</div>
+        <div>消融实验（2 变体）</div>
+        <div>多预算对比（3 档位）</div>
+        <div>失败注入（1x / 5x / 10x）</div>
+      </div>
+      <div>
+        <h4>快速入口</h4>
+        <div><a href="#/run">运行智能体</a></div>
+        <div><a href="#/travel">行程规划</a></div>
+        <div><a href="#/compare">方案对比</a></div>
+        <div><a href="https://github.com/itemgroup/budget-constrained-agent/blob/develop/docs/DEPLOYMENT.md" target="_blank" rel="noopener">部署文档</a></div>
+        <div><a href="https://github.com/itemgroup/budget-constrained-agent" target="_blank" rel="noopener">GitHub 仓库</a></div>
+      </div>
+    </div>
+    <div class="foot-base">
+      本站为静态 Mock 演示页 · 所有价格与质量均为模拟参数 · 完整版部署见<a href="https://github.com/itemgroup/budget-constrained-agent/blob/develop/docs/DEPLOYMENT.md" target="_blank" rel="noopener">部署文档</a><br>
+      Budget Agent — COMP5511 Course Project
+    </div>
+  </footer>
+
+</div>
+
+<script>
+/* ==========================================================================
+   静态 Mock 脚本：无任何网络请求，全部数据为预置示例 / 真实实验快照。
+   ========================================================================== */
+const $ = id => document.getElementById(id);
+const ZH = { completed: "已完成", budget_exhausted: "预算耗尽终止", failed: "异常终止" };
+const TAG = { ok: "正常", downgraded: "降级", insufficient_budget: "预算不足" };
+const AGENT_SHORT = { standard: "Standard", min_cost: "Min-Cost", hard_stop: "Hard-Stop", proposed: "Proposed" };
+const AGENT_COLOR = { standard: "#6e6e73", min_cost: "#ff9f0a", hard_stop: "#ff3b30", proposed: "#0071e3" };
+const SVC_TYPE_COLOR = {
+  "Search": "#0071e3", "Document Parsing": "#af52de",
+  "LLM Reasoning": "#ff9f0a", "Report Generation": "#34c759",
+  "Flight": "#0071e3", "Hotel": "#af52de", "Food": "#ff9f0a", "Activity": "#34c759"
+};
+
+/* ---------- 路由 ---------- */
+const ROUTES = ["", "run", "travel", "compare", "services", "lab", "about"];
+function route() {
+  let h = location.hash.replace(/^#\/?/, "");
+  if (!ROUTES.includes(h)) h = "";
+  document.querySelectorAll(".view").forEach(v =>
+    v.classList.toggle("active", v.id === "view-" + (h || "home")));
+  document.querySelectorAll(".nav-links a").forEach(a =>
+    a.classList.toggle("cur", a.dataset.route === h));
+  window.scrollTo({ top: 0 });
+}
+window.addEventListener("hashchange", route);
+
+/* ---------- Mock 数据：运行示例（$0.50 预算 · seed 5 真实运行快照） ---------- */
+const MOCK_RUN = {
+  steps: [
+    { step: 1, subtask_desc: "检索相关资料", task_type: "Search", service_name: "premium_search",
+      selection_status: "ok", executed: true, success: true, cost: 0.05, quality: 0.90,
+      note: "满足最低质量 0.70，在可支付服务中选质量最高者 premium_search；质量达标，子任务完成" },
+    { step: 2, subtask_desc: "分析并推理关键信息", task_type: "LLM Reasoning", service_name: "small_llm",
+      selection_status: "downgraded", executed: true, success: true, cost: 0.10, quality: 0.70,
+      note: "预算紧张：满足质量 0.75 的服务均不可支付，降级为 small_llm（质量 0.70）；降级方案执行成功，接受结果" },
+    { step: 3, subtask_desc: "生成摘要报告", task_type: "Report Generation", service_name: "custom_report",
+      selection_status: "ok", executed: true, success: true, cost: 0.20, quality: 0.90,
+      note: "满足最低质量 0.65，在可支付服务中选质量最高者 custom_report；质量达标，子任务完成" }
+  ],
+  outputs: [
+    { subtask_desc: "检索相关资料", task_type: "Search", service_name: "premium_search", quality: 0.90,
+      output: "[模拟输出] premium_search 已完成 [Search] 子任务：检索相关资料" },
+    { subtask_desc: "分析并推理关键信息", task_type: "LLM Reasoning", service_name: "small_llm", quality: 0.70,
+      output: "[模拟输出] small_llm 已完成 [LLM Reasoning] 子任务：分析并推理关键信息" },
+    { subtask_desc: "生成摘要报告", task_type: "Report Generation", service_name: "custom_report", quality: 0.90,
+      output: "[模拟输出] custom_report 已完成 [Report Generation] 子任务：生成摘要报告" }
+  ],
+  skipped_subtasks: []
+};
+
+/* ---------- Mock 数据：行程示例（$1500 宽裕预算） ---------- */
+const MOCK_PRICE_SHEET = [
+  { name: "business_flight", service_type: "Flight", cost_per_call: 780.00, quality_score: 0.98 },
+  { name: "premium_economy_flight", service_type: "Flight", cost_per_call: 520.00, quality_score: 0.88 },
+  { name: "economy_flight", service_type: "Flight", cost_per_call: 320.00, quality_score: 0.75 },
+  { name: "five_star_hotel", service_type: "Hotel", cost_per_call: 200.00, quality_score: 0.95 },
+  { name: "three_star_hotel", service_type: "Hotel", cost_per_call: 90.00, quality_score: 0.80 },
+  { name: "hostel_bed", service_type: "Hotel", cost_per_call: 45.00, quality_score: 0.60 },
+  { name: "fine_dining", service_type: "Food", cost_per_call: 60.00, quality_score: 0.90 },
+  { name: "local_restaurant", service_type: "Food", cost_per_call: 28.00, quality_score: 0.80 },
+  { name: "street_food", service_type: "Food", cost_per_call: 10.00, quality_score: 0.65 },
+  { name: "private_tour", service_type: "Activity", cost_per_call: 90.00, quality_score: 0.95 },
+  { name: "theme_park", service_type: "Activity", cost_per_call: 75.00, quality_score: 0.85 },
+  { name: "museum_pass", service_type: "Activity", cost_per_call: 20.00, quality_score: 0.75 },
+  { name: "free_citywalk", service_type: "Activity", cost_per_call: 0.00, quality_score: 0.55 }
+];
+const MOCK_TRAVEL = {
+  steps: [
+    { step: 1, subtask_desc: "预订往返机票", task_type: "Flight", service_name: "business_flight",
+      selection_status: "ok", executed: true, success: true, cost: 780.00, quality: 0.98,
+      note: "满足最低质量要求，在可支付选项中选体验最佳者 business_flight；预订成功" },
+    { step: 2, subtask_desc: "预订住宿", task_type: "Hotel", service_name: "five_star_hotel",
+      selection_status: "ok", executed: true, success: false, cost: 0.0, quality: 0.0,
+      note: "five_star_hotel 已满房；重规划 RETRY: 剩余预算充足，按原质量要求重试（失败不扣费）" },
+    { step: 3, subtask_desc: "预订住宿（重试）", task_type: "Hotel", service_name: "five_star_hotel",
+      selection_status: "ok", executed: true, success: true, cost: 200.00, quality: 0.95,
+      note: "满足最低质量要求，选体验最佳者 five_star_hotel；重试预订成功" },
+    { step: 4, subtask_desc: "安排餐饮（第1/3）", task_type: "Food", service_name: "fine_dining",
+      selection_status: "ok", executed: true, success: true, cost: 60.00, quality: 0.90,
+      note: "预算宽裕，选体验最佳者 fine_dining；预订成功" },
+    { step: 5, subtask_desc: "安排餐饮（第2/3）", task_type: "Food", service_name: "fine_dining",
+      selection_status: "ok", executed: true, success: true, cost: 60.00, quality: 0.90,
+      note: "预算宽裕，选体验最佳者 fine_dining；预订成功" },
+    { step: 6, subtask_desc: "安排餐饮（第3/3）", task_type: "Food", service_name: "fine_dining",
+      selection_status: "ok", executed: true, success: true, cost: 60.00, quality: 0.90,
+      note: "预算宽裕，选体验最佳者 fine_dining；预订成功" },
+    { step: 7, subtask_desc: "安排体验活动（第1/2）", task_type: "Activity", service_name: "private_tour",
+      selection_status: "ok", executed: true, success: true, cost: 90.00, quality: 0.95,
+      note: "满足最低质量要求，选体验最佳者 private_tour；预订成功" },
+    { step: 8, subtask_desc: "安排体验活动（第2/2）", task_type: "Activity", service_name: "theme_park",
+      selection_status: "ok", executed: true, success: true, cost: 75.00, quality: 0.85,
+      note: "剩余预算 $175.00，选可支付选项中体验最佳者 theme_park；预订成功" }
+  ],
+  outputs: [
+    { subtask_desc: "预订往返机票", task_type: "Flight", service_name: "business_flight", quality: 0.98,
+      output: "已预订「business_flight」[Flight]，实际消费 $780.00，体验评分 0.98。商务舱往返，优先登机+贵宾休息室。" },
+    { subtask_desc: "预订住宿（重试）", task_type: "Hotel", service_name: "five_star_hotel", quality: 0.95,
+      output: "已预订「five_star_hotel」[Hotel]，实际消费 $200.00，体验评分 0.95。市中心五星酒店，含早餐。" },
+    { subtask_desc: "安排餐饮（第1/3）", task_type: "Food", service_name: "fine_dining", quality: 0.90,
+      output: "已预订「fine_dining」[Food]，实际消费 $60.00，体验评分 0.90。精致料理，需提前预约。" },
+    { subtask_desc: "安排餐饮（第2/3）", task_type: "Food", service_name: "fine_dining", quality: 0.90,
+      output: "已预订「fine_dining」[Food]，实际消费 $60.00，体验评分 0.90。精致料理，需提前预约。" },
+    { subtask_desc: "安排餐饮（第3/3）", task_type: "Food", service_name: "fine_dining", quality: 0.90,
+      output: "已预订「fine_dining」[Food]，实际消费 $60.00，体验评分 0.90。精致料理，需提前预约。" },
+    { subtask_desc: "安排体验活动（第1/2）", task_type: "Activity", service_name: "private_tour", quality: 0.95,
+      output: "已预订「private_tour」[Activity]，实际消费 $90.00，体验评分 0.95。私人导览，深度文化体验。" },
+    { subtask_desc: "安排体验活动（第2/2）", task_type: "Activity", service_name: "theme_park", quality: 0.85,
+      output: "已预订「theme_park」[Activity]，实际消费 $75.00，体验评分 0.85。主题乐园一日通票。" }
+  ],
+  skipped_subtasks: []
+};
+
+/* ---------- Mock 数据：四方案对比（$0.50 参照预算） ---------- */
+const MOCK_COMPARE = [
+  { agent: "standard", label: "质量优先，无预算概念（内部预算 $999）",
+    spent: 0.75, over_budget: true, success: true, tool_calls: 3, repeated_calls: 0,
+    completeness: 1.00, correctness: 0.90, judge_overall: 0.95,
+    service_usage: { premium_search: 1, large_llm: 1, custom_report: 1 } },
+  { agent: "min_cost", label: "永远选最便宜的可支付服务",
+    spent: 0.11, over_budget: false, success: false, tool_calls: 2, repeated_calls: 1,
+    completeness: 0.33, correctness: 0.70, judge_overall: 0.52,
+    service_usage: { basic_search: 1, small_llm: 1 } },
+  { agent: "hard_stop", label: "质量可支付才执行，否则硬停止（无降级）",
+    spent: 0.05, over_budget: false, success: false, tool_calls: 1, repeated_calls: 0,
+    completeness: 0.33, correctness: 0.90, judge_overall: 0.62,
+    service_usage: { premium_search: 1 } },
+  { agent: "proposed", label: "预算感知选择 + 动态重规划（完整版）", best: true,
+    spent: 0.35, over_budget: false, success: true, tool_calls: 3, repeated_calls: 0,
+    completeness: 1.00, correctness: 0.83, judge_overall: 0.92,
+    service_usage: { premium_search: 1, small_llm: 1, custom_report: 1 } }
+];
+
+/* ---------- 服务目录（与 configs/service_config.yaml 一致的真实配置） ---------- */
+const SERVICES = [
+  { name: "basic_search", service_type: "Search", cost_per_call: 0.01, quality_score: 0.70,
+    failure_probability: 0.05, description: "Low-cost basic web search service" },
+  { name: "premium_search", service_type: "Search", cost_per_call: 0.05, quality_score: 0.90,
+    failure_probability: 0.02, description: "High-quality premium web search service" },
+  { name: "simple_parser", service_type: "Document Parsing", cost_per_call: 0.02, quality_score: 0.60,
+    failure_probability: 0.05, description: "Low-cost simple document parser" },
+  { name: "advanced_parser", service_type: "Document Parsing", cost_per_call: 0.08, quality_score: 0.85,
+    failure_probability: 0.03, description: "High-quality advanced document parser" },
+  { name: "small_llm", service_type: "LLM Reasoning", cost_per_call: 0.10, quality_score: 0.70,
+    failure_probability: 0.04, description: "Small LLM reasoning service" },
+  { name: "large_llm", service_type: "LLM Reasoning", cost_per_call: 0.50, quality_score: 0.90,
+    failure_probability: 0.01, description: "Large LLM reasoning service" },
+  { name: "template_report", service_type: "Report Generation", cost_per_call: 0.05, quality_score: 0.65,
+    failure_probability: 0.03, description: "Template-based report generation" },
+  { name: "custom_report", service_type: "Report Generation", cost_per_call: 0.20, quality_score: 0.90,
+    failure_probability: 0.02, description: "Customized high-quality report generation" }
+];
+
+/* ---------- 实验数据（experiments/results 真实摘要快照） ---------- */
+const LAB_COLS = ["runs", "success_rate", "avg_spent", "over_budget_ratio",
+  "avg_tool_calls", "avg_repeated_calls", "avg_completeness", "avg_correctness", "avg_judge_overall"];
+const LAB = [
+  { title: "基线对比汇总（4 方案 × 3 预算档 × 20 任务）", keys: ["agent", "budget_tier"], rows: [
+    ["standard", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["standard", "medium", 20, 1.0, 0.59, 0.75, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["standard", "low", 20, 1.0, 0.59, 1.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["min_cost", "high", 20, 0.25, 0.092, 0.0, 1.95, 0.75, 0.525, 0.6212, 0.5731],
+    ["min_cost", "medium", 20, 0.25, 0.092, 0.0, 1.95, 0.75, 0.525, 0.6212, 0.5731],
+    ["min_cost", "low", 20, 0.25, 0.092, 0.0, 1.95, 0.75, 0.525, 0.6212, 0.5731],
+    ["hard_stop", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["hard_stop", "medium", 20, 0.25, 0.115, 0.0, 1.25, 0.0, 0.5416, 0.8812, 0.7115],
+    ["hard_stop", "low", 20, 0.25, 0.0775, 0.0, 1.25, 0.0, 0.5416, 0.85, 0.6958],
+    ["proposed", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["proposed", "medium", 20, 1.0, 0.29, 0.0, 2.55, 0.05, 1.0, 0.8313, 0.9156],
+    ["proposed", "low", 20, 1.0, 0.1775, 0.0, 2.55, 0.05, 1.0, 0.7583, 0.8792]
+  ]},
+  { title: "消融实验汇总（完整版 vs 禁用各模块）", keys: ["variant", "budget_tier"], rows: [
+    ["full", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["full", "medium", 20, 1.0, 0.29, 0.0, 2.55, 0.05, 1.0, 0.8313, 0.9156],
+    ["full", "low", 20, 1.0, 0.1775, 0.0, 2.55, 0.05, 1.0, 0.7583, 0.8792],
+    ["no_budget_aware_selection", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["no_budget_aware_selection", "medium", 20, 0.25, 0.115, 0.0, 1.25, 0.0, 0.5416, 0.8812, 0.7115],
+    ["no_budget_aware_selection", "low", 20, 0.25, 0.0775, 0.0, 1.25, 0.0, 0.5416, 0.85, 0.6958],
+    ["no_dynamic_replanning", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["no_dynamic_replanning", "medium", 20, 0.95, 0.275, 0.0, 2.45, 0.05, 0.9667, 0.8329, 0.8998],
+    ["no_dynamic_replanning", "low", 20, 0.95, 0.17, 0.0, 2.45, 0.05, 0.9667, 0.7642, 0.8654]
+  ]},
+  { title: "多预算对比汇总（Proposed · 高 / 中 / 低）", keys: ["budget_tier"], rows: [
+    ["high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["medium", 20, 1.0, 0.29, 0.0, 2.55, 0.05, 1.0, 0.8313, 0.9156],
+    ["low", 20, 1.0, 0.1775, 0.0, 2.55, 0.05, 1.0, 0.7583, 0.8792]
+  ]},
+  { title: "失败注入测试汇总（1x / 5x / 10x 失败率）", keys: ["failure_level", "budget_tier"], rows: [
+    ["normal_1x", "high", 20, 1.0, 0.59, 0.0, 2.5, 0.0, 1.0, 0.8896, 0.9448],
+    ["normal_1x", "medium", 20, 1.0, 0.29, 0.0, 2.55, 0.05, 1.0, 0.8313, 0.9156],
+    ["normal_1x", "low", 20, 1.0, 0.1775, 0.0, 2.55, 0.05, 1.0, 0.7583, 0.8792],
+    ["elevated_5x", "high", 20, 1.0, 0.59, 0.0, 2.65, 0.15, 1.0, 0.8896, 0.9448],
+    ["elevated_5x", "medium", 20, 1.0, 0.29, 0.0, 2.85, 0.35, 1.0, 0.8313, 0.9156],
+    ["elevated_5x", "low", 20, 1.0, 0.1775, 0.0, 2.85, 0.35, 1.0, 0.7583, 0.8792],
+    ["severe_10x", "high", 20, 1.0, 0.59, 0.0, 2.95, 0.45, 1.0, 0.8896, 0.9448],
+    ["severe_10x", "medium", 20, 1.0, 0.29, 0.0, 3.4, 0.9, 1.0, 0.8313, 0.9156],
+    ["severe_10x", "low", 20, 1.0, 0.1775, 0.0, 3.6, 1.1, 1.0, 0.7583, 0.8792]
+  ]}
+];
+
+/* ---------- 渲染助手（与完整版一致的视觉呈现） ---------- */
+function timelineHTML(steps) {
+  return steps.map(s => {
+    const status = s.executed ? (s.success ? "" : '<span class="tag fail">失败</span>') : "";
+    const head = s.executed
+      ? `${s.subtask_desc} <span class="tag ${s.selection_status}">${TAG[s.selection_status]}</span>${status}`
+      : `${s.subtask_desc} <span class="tag insufficient_budget">未执行</span>`;
+    const meta = s.executed
+      ? `${s.service_name} · ${s.task_type} · 开销 $${s.cost.toFixed(2)} · 质量 ${s.quality.toFixed(2)}`
+      : s.task_type;
+    return `<div class="step s-${s.selection_status}">
+      <div class="head">轮次 ${s.step} · ${head}</div>
+      <div class="meta">${meta}</div>
+      <div class="note">${s.note}</div></div>`;
+  }).join("");
+}
+
+function ledgerHTML(steps) {
+  return `<table><tr><th>轮次</th><th>服务</th><th>类别</th><th>开销</th><th>质量</th></tr>` +
+    steps.filter(s => s.executed).map(s =>
+      `<tr><td>${s.step}</td><td>${s.service_name}</td><td>${s.task_type}</td>
+       <td class="num">$${s.cost.toFixed(2)}</td><td class="num">${s.quality.toFixed(2)}</td></tr>`
+    ).join("") + "</table>";
+}
+
+function outputsHTML(outputs, skipped) {
+  return outputs.map(o =>
+    `<div class="out"><div class="meta">[${o.task_type}] ${o.subtask_desc} · ${o.service_name} · 质量 ${o.quality.toFixed(2)}</div>${o.output}</div>`
+  ).join("") +
+    (skipped.length
+      ? `<div class="out"><div class="meta">缺损标记</div>被跳过: ${skipped.join("、")}</div>` : "");
+}
+
+function animateBars(scope) {
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    scope.querySelectorAll(".bar > div").forEach(b => b.style.width = b.dataset.w + "%")));
+}
+
+function drawChart(el, items) {
+  el.innerHTML = items.map(it =>
+    `<div class="col"><div class="val">${it.text}</div>
+     <div class="bar-v" style="height:0%;background:${it.color}" data-h="${Math.max(3, it.value / it.max * 100)}"></div>
+     <div class="lab">${it.label}</div></div>`).join("");
+  requestAnimationFrame(() => requestAnimationFrame(() =>
+    el.querySelectorAll(".bar-v").forEach(b => b.style.height = b.dataset.h + "%")));
+}
+
+/* ---------- 三个 Mock 按钮 ---------- */
+$("runBtn").onclick = () => {
+  $("result").style.display = "block";
+  $("timeline").innerHTML = timelineHTML(MOCK_RUN.steps);
+  $("ledger").innerHTML = ledgerHTML(MOCK_RUN.steps);
+  $("outputs").innerHTML = outputsHTML(MOCK_RUN.outputs, MOCK_RUN.skipped_subtasks);
+  animateBars($("result"));
+  $("result").scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+$("travelBtn").onclick = () => {
+  $("tResult").style.display = "block";
+  const cats = ["Flight", "Hotel", "Food", "Activity"];
+  $("priceSheet").innerHTML = cats.map(c => {
+    const opts = MOCK_PRICE_SHEET.filter(s => s.service_type === c)
+      .sort((a, b) => b.cost_per_call - a.cost_per_call);
+    return `<div class="ps-cat">
+      <h4><span class="dot" style="background:${SVC_TYPE_COLOR[c]}"></span>${c}</h4>
+      ${opts.map(s =>
+        `<div class="ps-item"><span class="nm">${s.name}</span>
+         <b>$${s.cost_per_call.toFixed(2)}</b><span class="q">★${s.quality_score.toFixed(2)}</span></div>`
+      ).join("")}</div>`;
+  }).join("");
+  $("tTimeline").innerHTML = timelineHTML(MOCK_TRAVEL.steps);
+  $("tOutputs").innerHTML = outputsHTML(MOCK_TRAVEL.outputs, MOCK_TRAVEL.skipped_subtasks);
+  animateBars($("tResult"));
+  $("tResult").scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+$("compareBtn").onclick = () => {
+  $("cResult").style.display = "block";
+  $("agentGrid").innerHTML = MOCK_COMPARE.map(m => `
+    <div class="agent-card${m.best ? " best" : ""}" style="border-top-color:${AGENT_COLOR[m.agent]}">
+      <h3>${AGENT_SHORT[m.agent]}${m.best ? ' <span class="tag ok">本场最佳</span>' : ""}</h3>
+      <div class="sub2">${m.label}</div>
+      <div class="big">$${m.spent.toFixed(2)}<small> / 预算 $0.50${m.over_budget ? ' <span class="tag over">超支</span>' : ""}</small></div>
+      <div class="succ-badge ${m.success ? "y" : "n"}">${m.success ? "✓ 任务完成" : "✗ 未完成"}</div>
+      <div class="kv">
+        工具调用 <b>${m.tool_calls}</b> 次（冗余重复 <b>${m.repeated_calls}</b>）<br>
+        Judge：完整性 <b>${m.completeness.toFixed(2)}</b> · 正确性 <b>${m.correctness.toFixed(2)}</b><br>
+        综合 <b>${m.judge_overall.toFixed(2)}</b>
+      </div>
+      <div class="usage">${Object.entries(m.service_usage).map(([k, v]) => `<span class="u">${k} ×${v}</span>`).join("")}</div>
+    </div>`).join("");
+  drawChart($("chartSpent"), MOCK_COMPARE.map(m => ({
+    label: AGENT_SHORT[m.agent], value: m.spent, max: 0.75,
+    color: AGENT_COLOR[m.agent], text: "$" + m.spent.toFixed(2)
+  })));
+  drawChart($("chartJudge"), MOCK_COMPARE.map(m => ({
+    label: AGENT_SHORT[m.agent], value: m.judge_overall, max: 1,
+    color: AGENT_COLOR[m.agent], text: m.judge_overall.toFixed(2)
+  })));
+  $("cResult").scrollIntoView({ behavior: "smooth", block: "start" });
+};
+
+/* ---------- 服务目录（静态渲染） ---------- */
+$("svcGrid").innerHTML = SERVICES.map(s => `
+  <div class="svc-card">
+    <span class="svc-type" style="background:${SVC_TYPE_COLOR[s.service_type]}">${s.service_type}</span>
+    <h3>${s.name}</h3>
+    <div class="desc">${s.description}</div>
+    <div class="svc-price">$${s.cost_per_call.toFixed(2)}<small> / 次调用</small></div>
+    <div class="q-row"><span>质量</span>
+      <div class="tr"><div class="fl" style="width:${s.quality_score * 100}%"></div></div>
+      <span>${s.quality_score.toFixed(2)}</span></div>
+    <span class="fail-badge">失败率 ${(s.failure_probability * 100).toFixed(0)}%</span>
+  </div>`).join("");
+
+/* ---------- 实验数据（静态渲染：成功率条 + 完整表格） ---------- */
+$("labBody").innerHTML = LAB.map(ds => {
+  const keys = ds.keys.concat(LAB_COLS);
+  const si = keys.indexOf("success_rate");
+  const bars = `<div style="margin:6px 0 18px">` + ds.rows.map(r => {
+    const label = ds.keys.map(k => r[keys.indexOf(k)]).join(" / ");
+    const v = r[si];
+    return `<div class="hbar"><div class="lb">${label}</div>
+      <div class="tr"><div class="fl" style="width:${v * 100}%"></div></div>
+      <div class="vl">${(v * 100).toFixed(0)}%</div></div>`;
+  }).join("") + `</div><div class="chart-note">成功率（success_rate）</div>`;
+  const table = `<div class="table-scroll"><table><tr>${keys.map(k => `<th>${k}</th>`).join("")}</tr>` +
+    ds.rows.map(r => `<tr>${r.map(c => `<td class="num">${c}</td>`).join("")}</tr>`).join("") +
+    `</table></div>`;
+  return `<div class="card"><h2>${ds.title}</h2>${bars}${table}</div>`;
+}).join("");
+
+route();
+</script>
+</body>
+</html>
