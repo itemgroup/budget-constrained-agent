@@ -41,6 +41,9 @@ kb_chroma/
 # ===== 实验输出 =====
 experiments/results/*.csv
 
+# ===== 运行时记忆数据 =====
+data/
+
 # ===== 日志 =====
 *.log
 logs/

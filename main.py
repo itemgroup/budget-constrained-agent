@@ -31,11 +31,29 @@ def _print_report(report: RunReport) -> None:
 
 def cmd_run(args: argparse.Namespace) -> None:
     """运行单个任务。"""
+    planner = None
+    judge = None
+    if args.llm:
+        # 真实 LLM（DeepSeek）：任务分解 + 结果评分；
+        # 无 DEEPSEEK_API_KEY 时两者各自回退到模拟实现
+        from src.evaluation.llm_judge import RealLLMJudge
+        from src.llm_task_planner import LLMTaskPlanner
+
+        planner = LLMTaskPlanner()
+        judge = RealLLMJudge()
     agent = AgentOrchestrator(
+        planner=planner,
         runner=SimulatedServiceRunner(seed=args.seed),
         max_steps=args.max_steps,
     )
-    _print_report(agent.run(args.task, args.budget))
+    report = agent.run(args.task, args.budget)
+    _print_report(report)
+    if judge is not None:
+        planned = len(report.outputs) + len(report.skipped_subtasks)
+        s = judge.score(args.task, report.outputs, planned)
+        print(f"LLM-Judge: completeness={s.completeness:.2f} "
+              f"correctness={s.correctness:.2f} overall={s.overall:.2f}")
+        print(f"评分说明: {s.rationale}")
 
 
 def cmd_experiment(args: argparse.Namespace) -> None:
@@ -74,6 +92,8 @@ def main() -> None:
     p_run.add_argument("--budget", type=float, default=1.0, help="总预算（美元）")
     p_run.add_argument("--seed", type=int, default=0, help="随机种子（可复现）")
     p_run.add_argument("--max-steps", type=int, default=20, help="最大轮次上限")
+    p_run.add_argument("--llm", action="store_true",
+                       help="用真实 LLM（DeepSeek）做任务分解与结果评分")
 
     p_exp = sub.add_parser("experiment", help="运行批量实验")
     p_exp.add_argument("name", choices=[

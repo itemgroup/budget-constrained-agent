@@ -1,0 +1,118 @@
+# 旅行行程规划场景 · 选项目录（场景扩展包，非 proposal 主场景）
+#
+# 该目录演示同一引擎如何泛化到"真实花钱"的消费场景：
+# - 服务注册表 -> 选项目录（每类行程环节挂多个档位选项）
+# - 服务价格   -> 该选项的基准报价（运行时按 seed 施加 ±15% 波动，模拟"查询实时价"）
+# - 质量分     -> 体验评分（0~1）
+# - 失败率     -> 售罄/满房/报价失效概率（预订失败不扣费，与主场景语义一致）
+#
+# plan 为行程模板：ScenarioPlanner 按顺序展开为子任务序列（count>1 时编号拆分）。
+
+scenario:
+  name: travel
+  description: 旅行行程规划（机票/住宿/餐饮/活动）
+
+plan:
+  - type: Flight
+    count: 1
+    required_min_quality: 0.55
+    desc: 预订往返交通
+  - type: Hotel
+    count: 1
+    required_min_quality: 0.60
+    desc: 预订住宿
+  - type: Food
+    count: 3
+    required_min_quality: 0.45
+    desc: 安排当日餐饮
+  - type: Activity
+    count: 2
+    required_min_quality: 0.50
+    desc: 安排体验活动
+
+options:
+  # ---- Flight 往返交通 ----
+  - name: business_flight
+    category: Flight
+    base_price: 780.00
+    quality: 0.90
+    failure_probability: 0.03
+    description: 商务舱直飞，宽体座椅，含贵宾厅
+  - name: premium_flight
+    category: Flight
+    base_price: 520.00
+    quality: 0.75
+    failure_probability: 0.05
+    description: 超级经济舱，座位间距加宽
+  - name: economy_flight
+    category: Flight
+    base_price: 320.00
+    quality: 0.60
+    failure_probability: 0.10
+    description: 经济舱直飞，性价比之选
+
+  # ---- Hotel 住宿 ----
+  - name: five_star_hotel
+    category: Hotel
+    base_price: 200.00
+    quality: 0.90
+    failure_probability: 0.08
+    description: 市中心五星酒店，含早餐
+  - name: three_star_hotel
+    category: Hotel
+    base_price: 90.00
+    quality: 0.65
+    failure_probability: 0.10
+    description: 三星连锁酒店，位置便利
+  - name: hostel
+    category: Hotel
+    base_price: 45.00
+    quality: 0.45
+    failure_probability: 0.12
+    description: 青年旅舍床位，社交氛围
+
+  # ---- Food 餐饮 ----
+  - name: fine_dining
+    category: Food
+    base_price: 60.00
+    quality: 0.85
+    failure_probability: 0.05
+    description: 精致料理，需提前订位
+  - name: local_restaurant
+    category: Food
+    base_price: 28.00
+    quality: 0.70
+    failure_probability: 0.05
+    description: 本地特色餐厅
+  - name: street_food
+    category: Food
+    base_price: 10.00
+    quality: 0.45
+    failure_probability: 0.08
+    description: 街头小吃，市井风味
+
+  # ---- Activity 体验活动 ----
+  - name: private_tour
+    category: Activity
+    base_price: 90.00
+    quality: 0.85
+    failure_probability: 0.06
+    description: 私人导览深度游
+  - name: theme_park
+    category: Activity
+    base_price: 75.00
+    quality: 0.80
+    failure_probability: 0.05
+    description: 主题乐园一日票
+  - name: museum
+    category: Activity
+    base_price: 20.00
+    quality: 0.60
+    failure_probability: 0.05
+    description: 博物馆门票
+  - name: free_walk
+    category: Activity
+    base_price: 0.00
+    quality: 0.30
+    failure_probability: 0.00
+    description: 自由行citywalk，零成本替代
