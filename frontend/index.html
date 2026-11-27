@@ -43,6 +43,20 @@
   }
   .nav-links a:hover { background: rgba(0,0,0,.05); text-decoration: none; }
   .nav-links a.cur { color: var(--accent); font-weight: 600; }
+  .lang-switch {
+    display: flex; gap: 2px; background: #e8e8ed; border-radius: 980px;
+    padding: 3px; margin-left: 8px;
+  }
+  .lang-switch button {
+    border: none; background: transparent; font: inherit; font-size: 12px;
+    font-weight: 600; color: var(--sub); padding: 4px 10px;
+    border-radius: 980px; cursor: pointer; transition: all .2s;
+  }
+  .lang-switch button:hover { color: var(--text); }
+  .lang-switch button.on {
+    background: #fff; color: var(--text);
+    box-shadow: 0 1px 3px rgba(0,0,0,.12);
+  }
 
   .wrap { max-width: 1080px; margin: 0 auto; padding: 0 22px 20px; }
   .view { display: none; }
@@ -496,6 +510,10 @@
       <a href="#/compare" data-route="compare">为什么更优</a>
       <a href="#/services" data-route="services">服务与预算</a>
       <a href="#/about" data-route="about">技术细节</a>
+      <div class="lang-switch" id="langSwitch" data-no-i18n>
+        <button data-lang="zh" class="on">ZH</button>
+        <button data-lang="en">EN</button>
+      </div>
     </div>
   </div>
 </nav>
@@ -906,6 +924,268 @@
 </div>
 
 <script>
+const I18N_EN = {"01 · 不超支":"01 · Never overspend","02 · 不浪费":"02 · Never waste","03 · 不怕失败":"03 · Unafraid of failure","10× 失败注入 · 低预算":"10× failure injection · Low budget","20 个企业任务 × 3 档预算的批量实验结果":"Batch results across 20 enterprise tasks × 3 budget tiers","20 个企业任务 × 3 档预算，覆盖基线对比、消融、多预算扫描与失败注入。结论在上，原始数据可展开查证。":"20 enterprise tasks × 3 budget tiers, covering baseline comparison, ablation, multi-budget sweeps, and failure injection. Conclusions up top; expand the raw data to verify.","3 个子任务":"3 subtasks","API Key（仅保存在本机内存，不落盘）":"API key (kept in local memory only, never written to disk)","API 地址（Base URL，需为 https；本机可用 http://127.0.0.1）":"API base URL (must be https; http://127.0.0.1 works locally)","Budget Agent · 每一分钱，都在预算内":"Budget Agent · Every cent, within budget","COMP5511 · 预算约束自主智能体":"COMP5511 · Budget-Constrained Autonomous Agent","COMP5511 课程项目":"COMP5511 course project","LIVE DEMO · 自动播放":"LIVE DEMO · Autoplay","Simulated environment · 所有价格与质量均为模拟参数 · 前端零外部资源，后端仅 Python 标准库":"Simulated environment · All prices and quality scores are simulated · No external frontend resources; Python standard library only on the backend","Standard 低预算超支 100%":"Standard overspends 100% on a low budget","Standard 恒定 $0.59":"Standard always spends $0.59","planner / selector / runner / replanner 全部构造函数注入，可自由替换为基线或消融变体。":"planner / selector / runner / replanner are all constructor-injected and can be freely swapped for baseline or ablation variants.","· 全程未超支":"· Never overspent","· 剩余":"· Remaining","— 自定义任务 —":"— Custom task —","— 自定义行程 —":"— Custom trip —","不是让 AI 更聪明，而是让 AI 花钱更有分寸。":"It's not about making AI smarter — it's about making AI spend with better judgment.","东京 3 日 · 体验优先（预算 $1500）":"Tokyo 3 days · Experience first ($1500 budget)","东京 3 日 · 均衡（预算 $800）":"Tokyo 3 days · Balanced ($800 budget)","东京 3 日 · 穷游（预算 $400）":"Tokyo 3 days · Budget travel ($400 budget)","中 $0.50":"Medium $0.50","为什么更优":"Why it wins","主控统一决策与记账，调研、询价、执行、审计各司其职；最终结果由审计关卡统一验收。":"The orchestrator makes every decision and keeps the books; research, pricing, execution, and auditing each own their job, and the audit gate signs off on the final result.","主控：唯一决策者":"Orchestrator: sole decision-maker","价格越低，质量通常越低":"Lower price usually means lower quality","任务 · 步骤 · 服务":"Task · Step · Service","任务分解":"Task decomposition","任务成功率、平均模拟开销、超预算比例、工具调用次数、输出完整性 / 正确性，对应 proposal 3.5。":"Task success rate, average simulated cost, over-budget ratio, tool calls, and output completeness / correctness — see proposal 3.5.","任务描述":"Task description","企业任务":"Enterprise tasks","企业任务 / 行程规划场景":"Enterprise tasks / trip planning scenarios","低 $0.25":"Low $0.25","低预算任务成功率":"Low-budget success rate","低预算平均花费":"Low-budget average spend","低预算成功率":"Low-budget success rate","依赖注入":"Dependency injection","保存配置":"Save config","先完成连接测试，通过后才会出现任务表单。配置仅保存在本机内存，不落盘。":"Complete a connection test first; the task form only appears after it passes. Config is kept in local memory and never written to disk.","全局唯一账本":"One global ledger","内置模拟引擎 · 不调用外部模型":"Built-in simulation engine · No external model calls","决策管道":"Decision pipeline","分析并推理关键信息":"Analyze and reason over key information","剩下的交给它。":"leave the rest to it.","剩余预算":"Remaining budget","剩余预算决定它能选哪一档":"The remaining budget decides which tier it can afford","加载中…":"Loading…","历史经验与记忆（扩展能力）":"History & memory (extension)","参照预算":"Reference budget","参考以前的分解与花费":"Reuse past decompositions and costs","参考历史任务":"Reference past tasks","只有服务被选择器确认可负担后才会记账；调用失败不产生费用，避免重试消耗预算。":"Charges are recorded only after the selector confirms a service is affordable; failed calls cost nothing, so retries don't burn budget.","只有真实 LLM 运行会沉淀经验；模拟运行不计入。检索不到相似记录时按常规流程分解。":"Only real LLM runs accumulate experience; simulated runs don't count. When no similar record is found, it decomposes as usual.","可复现":"Reproducible","可接入 LLM":"LLM-ready","同一个任务、同一份预算，和三种常见做法同台对比；再用批量实验证明这不是偶然。":"Same task, same budget, compared side by side with three common approaches — then batch experiments to prove it's no coincidence.","同一个任务、同一份预算，四种做法同台对比；再用批量实验证明这不是偶然。":"Same task, same budget, four approaches side by side — then batch experiments to prove it's no coincidence.","同一任务与预算下，模拟执行结果稳定可复现，便于报告与答辩演示。":"Given the same task and budget, simulated runs are stable and reproducible — handy for reports and defense demos.","唯一账本写入者":"Sole ledger writer","四个方案使用完全相同的任务、预算与模拟环境，结果可以直接比较。":"All four approaches use exactly the same task, budget, and simulated environment, so results are directly comparable.","回填成功步骤":"Backfill successful steps","场景":"Scenario","基线对比、消融实验、多预算扫描、工具失败注入四组实验，对应 proposal 3.6。":"Four experiment groups — baseline comparison, ablation, multi-budget sweep, and tool failure injection — see proposal 3.6.","基线对比（4 方案）":"Baseline comparison (4 approaches)","多智能体协作（扩展能力）":"Multi-agent collaboration (extension)","多预算对比（3 档位）":"Multi-budget comparison (3 tiers)","失败不扣费，换一家继续":"No charge on failure — switch provider and continue","失败或质量不足 → Replanner 动态重规划（重试 / 跳过 / 终止）→ 回到管道继续执行":"Failure or insufficient quality → Replanner re-plans on the fly (retry / skip / terminate) → back to the pipeline","失败注入（1x / 5x / 10x）":"Failure injection (1x / 5x / 10x)","它替你解决三件事":"Three things it handles for you","实际开销对比":"Actual spend comparison","实验":"Experiments","实验设计":"Experiment design","宽裕 $1500":"Comfortable $1500","对账 + 格式校验":"Reconciliation + format checks","尚未连接。填写配置并点击「测试连接」。":"Not connected yet. Fill in the config and click \"Test connection\".","已完成 · 总花费":"Completed · Total spend","已花费":"Spent","已连接":"Connected","开始对比":"Start comparison","当前引擎：真实 LLM · 已忽略历史记忆，每次都会真实调用":"Current engine: real LLM · History ignored — makes a real call every time","快速入口":"Quick links","忽略历史记忆（强制调用）":"Ignore history (force a real call)","总预算（USD）":"Total budget (USD)","想知道它凭什么更优？":"Want to know why it wins?","所有开销只经过 BudgetLedger，预算约束在任何策略下都不会失效。":"Every charge goes through BudgetLedger, so the budget constraint holds under any strategy.","扣费时机":"When charges are recorded","执行或安排":"Execute or book","批量实验":"Batch experiments","技术细节":"Technical details","按配置失败率失败":"Fails at the configured rate","智能体只在这些模拟服务里做选择。价格、质量、失败率全部公开。":"The agent only chooses among these simulated services. Prices, quality, and failure rates are all public.","服务与预算":"Services & Budget","服务调用失败不会重复扣费。它会自动换用替代服务继续执行，实在没有可行方案才终止，并保留已有成果。":"A failed call is never charged twice. It switches to an alternative service and keeps going; only when nothing viable is left does it stop, keeping all completed work.","极端失败下仍完成":"Still completes under extreme failure","查历史经验":"Look up past experience","查看对比与实验结论":"See comparison & experiment results","标准 $800":"Standard $800","校验决策价 = 记账价":"Verify decision price = ledger price","核心模块":"Core modules","检索相似历史任务":"Find similar past tasks","检索相关资料":"Retrieve relevant material","模型":"Model","模拟体验":"Simulation","模拟和真实模型完全分开：先用模拟看流程，再接入你的模型跑真实任务。":"Simulation and real models are fully separate: try the flow in simulation first, then plug in your own model for real tasks.","模拟执行":"Simulated execution","每一笔开销都先经过预算检查。剩余预算不够时，它主动降级或终止，把已经完成的部分交给你，而不是透支。":"Every charge goes through a budget check first. When the remaining budget can't cover it, the agent downgrades or stops on its own and hands you what's finished — never an overdraft.","每笔开销可追溯":"Every charge traceable","没有任何可负担方案时立即停止，返回已完成的部分，绝不透支。":"When nothing affordable remains, it stops immediately, returns the completed parts, and never overspends.","测试连接":"Test connection","消融实验（2 变体）":"Ablation study (2 variants)","现场对比":"Side-by-side comparison","生成摘要报告":"Write a summary report","生成本次报价":"Quote this run","看它凭什么更优":"See why it wins","真实 LLM · 调用你配置的模型":"Real LLM · Calls the model you configure","真实模型":"Real model","穷游 $400":"Budget travel $400","立即体验":"Try it now","第一道：候选过滤":"Guard 1: candidate filtering","第三道：主动终止":"Guard 3: proactive termination","第二道：自动降级":"Guard 2: automatic downgrade","经验记忆":"Experience memory","经验越攒越准":"The more it accumulates, the sharper it gets","给任务一个预算，":"Give a task a budget,","综合分 = 0.5 × 完整性 + 0.5 × 事实正确性（当前为模拟评分器）。":"Overall = 0.5 × completeness + 0.5 × factual correctness (currently a simulated judge).","行程示例":"Trip examples","行程规划":"Trip planning","记账":"Bookkeeping","设计与评估":"Design & evaluation","评估指标":"Evaluation metrics","调用失败不计费，也不重试同一家":"Failed calls aren't charged, and the same provider isn't retried","调研行业数据并生成季度业务报告。预算紧张时自动降级，服务失败就换一家。":"Research industry data and produce a quarterly business report. It downgrades when the budget is tight and switches providers when a service fails.","超支率":"Over-budget ratio","跨运行保留":"Persists across runs","输出合规交付物":"Deliver compliant output","输出质量对比":"Output quality comparison","运行前":"Before a run","运行后":"After a run","运行时 LLM 配置只存进程内存、不落盘；对外仅暴露掩码。":"LLM config is held in process memory only and never written to disk; only masked values are exposed.","运行模拟":"Run simulation","运行真实模型":"Run real model","选择 custom_report · 质量 0.90 · 花费 $0.20":"Pick custom_report · quality 0.90 · cost $0.20","选择 premium_search · 质量 0.90 · 花费 $0.05":"Pick premium_search · quality 0.90 · cost $0.05","选服务之前先剔除当前预算支付不起的选项，不可负担的服务不会进入候选池。":"Before choosing, options the current budget can't cover are filtered out — unaffordable services never enter the candidate pool.","配置安全":"Config security","重新播放":"Replay","钱花完之前，先停下来":"Stop before the money runs out","降级":"Downgraded","项目":"Project","预算 $0.50，看它怎么花。":"A $0.50 budget — watch how it spends.","预算内最大化质量":"Maximize quality within budget","预算安全的三道防线":"Three lines of defense for budget safety","预算宽裕时选质量最高的服务；预算紧张时自动换成性价比更高的方案。同一件事，花更少的钱完成。":"When budget allows it picks the highest-quality service; when money is tight it switches to better value. Same job, less money.","预算感知选服务":"Budget-aware service selection","预算管理、预算感知选择、动态重规划三个核心模块，加一层可插拔的执行与审计能力。":"Three core modules — budget management, budget-aware selection, and dynamic re-planning — plus a pluggable execution and audit layer.","预算紧张时，在可支付服务里选择质量最高的一档，而不是直接失败。":"When the budget is tight, it picks the highest-quality service it can still afford instead of failing outright.","预算紧张，改用 small_llm · 质量 0.70 · 花费 $0.10":"Tight budget — switched to small_llm · quality 0.70 · cost $0.10","预算约束自主智能体":"Budget-Constrained Autonomous Agent","预算越紧，越会算账":"The tighter the budget, the sharper the math","预置任务":"Preset tasks","首页":"Home","高 $1.00":"High $1.00","例如：调研行业数据，分析市场机会并生成季度业务报告":"e.g. Research industry data, analyze market opportunities, and produce a quarterly business report","${s.service_name} · ${s.task_type} · 开销 $${s.cost.toFixed(2)} · 质量 ${s.quality.toFixed(2)}":"${s.service_name} · ${s.task_type} · cost $${s.cost.toFixed(2)} · quality ${s.quality.toFixed(2)}","${s.subtask_desc} <span class=\"tag insufficient_budget\">未执行</span>":"${s.subtask_desc} <span class=\"tag insufficient_budget\">Not executed</span>","<div class=\"agent-card${isBest ? \" best\" : \"\"}\" style=\"border-top-color:${AGENT_COLOR[m.agent]}\">\n      <h3>${AGENT_SHORT[m.agent]}${isBest ? ' <span class=\"tag ok\">本场最佳</span>' : \"\"}</h3>\n      <div class=\"sub2\">${m.label}</div>\n      <div class=\"big\">$${m.spent.toFixed(2)}<small> / 预算 $${m.budget.toFixed(2)}${m.over_budget ? ' <span class=\"tag over\">超支</span>' : \"\"}</small></div>\n      <div class=\"succ-badge ${m.success ? \"y\" : \"n\"}\">${m.success ? \"✓ 任务完成\" : \"✗ 未完成\"}</div>\n      <div class=\"kv\">\n        工具调用 <b>${m.tool_calls}</b> 次（冗余重复 <b>${m.repeated_calls}</b>）<br>\n        Judge：完整性 <b>${m.completeness.toFixed(2)}</b> · 正确性 <b>${m.correctness.toFixed(2)}</b><br>\n        综合 <b>${m.judge_overall.toFixed(2)}</b>\n      </div>\n      <div class=\"usage\">${usage || '<span class=\"u\">无服务调用</span>'}</div>\n    </div>":"<div class=\"agent-card${isBest ? \" best\" : \"\"}\" style=\"border-top-color:${AGENT_COLOR[m.agent]}\">\n      <h3>${AGENT_SHORT[m.agent]}${isBest ? ' <span class=\"tag ok\">Best of the run</span>' : \"\"}</h3>\n      <div class=\"sub2\">${m.label}</div>\n      <div class=\"big\">$${m.spent.toFixed(2)}<small> / budget $${m.budget.toFixed(2)}${m.over_budget ? ' <span class=\"tag over\">Over budget</span>' : \"\"}</small></div>\n      <div class=\"succ-badge ${m.success ? \"y\" : \"n\"}\">${m.success ? \"✓ Task complete\" : \"✗ Incomplete\"}</div>\n      <div class=\"kv\">\n        Tool calls <b>${m.tool_calls}</b> (redundant <b>${m.repeated_calls}</b>)<br>\n        Judge: completeness <b>${m.completeness.toFixed(2)}</b> · correctness <b>${m.correctness.toFixed(2)}</b><br>\n        Overall <b>${m.judge_overall.toFixed(2)}</b>\n      </div>\n      <div class=\"usage\">${usage || '<span class=\"u\">No service calls</span>'}</div>\n    </div>","<div class=\"card\">\n      <h2>本次查询到的报价单</h2>\n      <div class=\"price-sheet\">${priceSheetHTML(d.price_sheet || [])}</div>\n      <div class=\"chart-note\">报价为基准价 ±15% 的模拟波动；方案不可用不计费，智能体会自动换一家或砍掉该环节。</div>\n    </div>":"<div class=\"card\">\n      <h2>Price sheet for this query</h2>\n      <div class=\"price-sheet\">${priceSheetHTML(d.price_sheet || [])}</div>\n      <div class=\"chart-note\">Quotes vary ±15% around a base price in simulation; options that can't be used aren't charged, and the agent switches providers or drops that step.</div>\n    </div>","<div class=\"card\">\n    <h2>${isTravel ? \"规划结果\" : \"运行结果\"}</h2>\n    <span class=\"banner ${d.state}\">${ZH[d.state] || d.state}</span>\n    <div class=\"term-reason\">${esc(reason)}</div>\n    <div class=\"stats\">\n      <div class=\"stat\"><div class=\"v\">$${d.spent.toFixed(2)}</div><div class=\"k\">${spentLabel}</div></div>\n      <div class=\"stat\"><div class=\"v\">$${d.remaining.toFixed(2)}</div><div class=\"k\">剩余</div></div>\n      <div class=\"stat\"><div class=\"v\">${d.steps.filter(s => s.executed).length}</div><div class=\"k\">${isTravel ? \"安排操作\" : \"服务调用\"}</div></div>\n      <div class=\"stat\"><div class=\"v\">${d.outputs.length}</div><div class=\"k\">${outLabel}</div></div>\n    </div>\n    <div class=\"bar\"><div data-w=\"${Math.min(100, d.spent / d.total_budget * 100)}\"></div></div>\n    ${meta ?":"<div class=\"card\">\n    <h2>${isTravel ? \"Plan result\" : \"Run result\"}</h2>\n    <span class=\"banner ${d.state}\">${ZH[d.state] || d.state}</span>\n    <div class=\"term-reason\">${esc(reason)}</div>\n    <div class=\"stats\">\n      <div class=\"stat\"><div class=\"v\">$${d.spent.toFixed(2)}</div><div class=\"k\">${spentLabel}</div></div>\n      <div class=\"stat\"><div class=\"v\">$${d.remaining.toFixed(2)}</div><div class=\"k\">Remaining</div></div>\n      <div class=\"stat\"><div class=\"v\">${d.steps.filter(s => s.executed).length}</div><div class=\"k\">${isTravel ? \"Bookings\" : \"Service calls\"}</div></div>\n      <div class=\"stat\"><div class=\"v\">${d.outputs.length}</div><div class=\"k\">${outLabel}</div></div>\n    </div>\n    <div class=\"bar\"><div data-w=\"${Math.min(100, d.spent / d.total_budget * 100)}\"></div></div>\n    ${meta ?","<div class=\"card\"><h2>子任务输出</h2>${outputsHTML(d.outputs, d.skipped_subtasks)}</div>":"<div class=\"card\"><h2>Subtask outputs</h2>${outputsHTML(d.outputs, d.skipped_subtasks)}</div>","<div class=\"card\"><h2>执行时间线</h2>${timelineHTML(d.steps)}</div>":"<div class=\"card\"><h2>Execution timeline</h2>${timelineHTML(d.steps)}</div>","<div class=\"card\"><h2>暂无实验数据</h2>\n      <div class=\"empty\">尚未生成实验数据。请先运行批量实验，完成后刷新本页即可查看结果。</div></div>":"<div class=\"card\"><h2>No experiment data yet</h2>\n      <div class=\"empty\">No experiment data has been generated yet. Run the batch experiments first, then refresh this page to see the results.</div></div>","<div class=\"card\"><h2>行程方案</h2>${outputsHTML(d.outputs, d.skipped_subtasks)}</div>":"<div class=\"card\"><h2>Trip plan</h2>${outputsHTML(d.outputs, d.skipped_subtasks)}</div>","<div class=\"card\"><h2>行程时间线</h2>${timelineHTML(d.steps)}</div>":"<div class=\"card\"><h2>Trip timeline</h2>${timelineHTML(d.steps)}</div>","<div class=\"card\"><h2>账本明细</h2><div class=\"table-scroll\">${ledgerHTML(d.steps)}</div></div>":"<div class=\"card\"><h2>Ledger details</h2><div class=\"table-scroll\">${ledgerHTML(d.steps)}</div></div>","<div class=\"empty\">加载失败: ${e}</div>":"<div class=\"empty\">Failed to load: ${e}</div>","<div class=\"empty\">实验数据加载失败：${e}</div>":"<div class=\"empty\">Failed to load experiment data: ${e}</div>","<div class=\"empty\">无成功子任务输出</div>":"<div class=\"empty\">No successful subtask outputs</div>","<div class=\"empty\">无成功记账记录</div>":"<div class=\"empty\">No successful ledger entries</div>","<div class=\"out\"><div class=\"meta\">[${o.task_type}] ${o.subtask_desc} · ${o.service_name} · 质量 ${o.quality.toFixed(2)}</div>${o.output}</div>":"<div class=\"out\"><div class=\"meta\">[${o.task_type}] ${o.subtask_desc} · ${o.service_name} · quality ${o.quality.toFixed(2)}</div>${o.output}</div>","<div class=\"out\"><div class=\"meta\">缺损标记</div>被跳过: ${skipped.join(\"、\")}</div>":"<div class=\"out\"><div class=\"meta\">Gaps</div>Skipped: ${skipped.join(\", \")}</div>","<div class=\"step s-${s.selection_status}\">\n      <div class=\"head\">轮次 ${s.step} · ${head}</div>\n      <div class=\"meta\">${meta}</div>\n      <div class=\"note\">${s.note}</div></div>":"<div class=\"step s-${s.selection_status}\">\n      <div class=\"head\">Round ${s.step} · ${head}</div>\n      <div class=\"meta\">${meta}</div>\n      <div class=\"note\">${s.note}</div></div>","<div class=\"svc-card\">\n        <span class=\"svc-type\" style=\"background:${SVC_TYPE_COLOR[s.service_type] || \"#6e6e73\"}\">${s.service_type}</span>\n        <h3>${s.name}</h3>\n        <div class=\"desc\">${s.description}</div>\n        <div class=\"svc-price\">$${s.cost_per_call.toFixed(2)}<small> / 次调用</small></div>\n        <div class=\"q-row\"><span>质量</span>\n          <div class=\"tr\"><div class=\"fl\" style=\"width:${s.quality_score * 100}%\"></div></div>\n          <span>${s.quality_score.toFixed(2)}</span></div>\n        <span class=\"fail-badge\">失败率 ${(s.failure_probability * 100).toFixed(0)}%</span>\n      </div>":"<div class=\"svc-card\">\n        <span class=\"svc-type\" style=\"background:${SVC_TYPE_COLOR[s.service_type] || \"#6e6e73\"}\">${s.service_type}</span>\n        <h3>${s.name}</h3>\n        <div class=\"desc\">${s.description}</div>\n        <div class=\"svc-price\">$${s.cost_per_call.toFixed(2)}<small> / call</small></div>\n        <div class=\"q-row\"><span>Quality</span>\n          <div class=\"tr\"><div class=\"fl\" style=\"width:${s.quality_score * 100}%\"></div></div>\n          <span>${s.quality_score.toFixed(2)}</span></div>\n        <span class=\"fail-badge\">Failure rate ${(s.failure_probability * 100).toFixed(0)}%</span>\n      </div>","<span class=\"tag fail\">失败</span>":"<span class=\"tag fail\">Failed</span>","<span class=\"tag ok\">本场最佳</span>":"<span class=\"tag ok\">Best of the run</span>","<span class=\"tag over\">超支</span>":"<span class=\"tag over\">Over budget</span>","<span class=\"u\">无服务调用</span>":"<span class=\"u\">No service calls</span>","<table><tr><th>轮次</th><th>服务</th><th>类别</th><th>开销</th><th>质量</th></tr>":"<table><tr><th>Round</th><th>Service</th><th>Category</th><th>Cost</th><th>Quality</th></tr>","Standard 低预算超支 ${st ? pct(st.over_budget_ratio) : \"—\"}":"Standard low-budget overspend ${st ? pct(st.over_budget_ratio) : \"—\"}","Standard 恒定 $${st ? Number(st.avg_spent).toFixed(2) : \"—\"}":"Standard always spends $${st ? Number(st.avg_spent).toFixed(2) : \"—\"}","· 参考 ${m.rag.hits.length} 条历史任务":"· Referenced ${m.rag.hits.length} past tasks","· 对账${a.reconciliation_ok ? \"一致\" : \"异常\"}${score}":"· Reconciliation: ${a.reconciliation_ok ? \"matched\" : \"mismatch\"}${score}","✓ 任务完成":"✓ Task complete","✗ 未完成":"✗ Incomplete","一致":"Matched","例如：安排一趟 3 天的东京行程，兼顾体验与花费":"e.g. Plan a 3-day trip to Tokyo that balances experience and cost","保存中…":"Saving…","分解来源：真实 LLM（调用 ${m.llm_calls} 次，记忆命中 ${m.memory_hits} 次）":"Decomposed by: real LLM (${m.llm_calls} calls, ${m.memory_hits} memory hits)","历史记忆命中，本次复用了历史分解，未调用 LLM（已省 1 次调用）":"Memory hit — reused a past decomposition without calling the LLM (saved 1 call)","参照预算 $${d.budget.toFixed(2)}；Standard 内部无预算约束（$999），超支以参照预算标记。":"Reference budget $${d.budget.toFixed(2)}; Standard has no internal budget limit ($999), so overspend is flagged against the reference budget.","基线对比汇总（4 方案 × 3 预算档 × 20 任务）":"Baseline comparison summary (4 approaches × 3 budget tiers × 20 tasks)","多预算对比汇总（高 / 中 / 低）":"Multi-budget comparison summary (high / medium / low)","失败注入测试汇总（1x / 5x / 10x 失败率）":"Failure injection summary (1x / 5x / 10x failure rates)","安排操作":"Bookings","完成子任务":"Subtasks completed","对比运行中…":"Running comparison…","已保存":"Saved","已保存（留空沿用）":"Saved (leave blank to keep)","已安排项":"Booked items","已完成":"Completed","已消耗":"Spent","已连接 · 当前模型：":"Connected · Current model: ","已连接。":"Connected.","开始规划":"Start planning","异常":"Mismatch","异常终止":"Failed","当前引擎：真实 LLM · 优先复用历史经验":"Current engine: real LLM · Reuses past experience first","服务调用":"Service calls","本次编排：多 Agent（${msgs} 条协作日志）· 审计${a.passed ? \"通过\" : \"驳回\"}":"Orchestration: multi-agent (${msgs} collaboration logs) · Audit ${a.passed ? \"passed\" : \"rejected\"}","来自 .env（留空沿用）":"From .env (leave blank to keep)","正常":"OK","消融实验汇总（完整版 vs 禁用各模块）":"Ablation summary (full version vs each module disabled)","真实 LLM 调用失败，已回退模拟分解（${m.llm_calls} 次调用未生效，请检查 Key / 地址 / 网络）":"Real LLM call failed; fell back to simulated decomposition (${m.llm_calls} calls had no effect — check the key / URL / network)","真实模型运行中…":"Running real model…","规划中…":"Planning…","规划结果":"Plan result","请先完成连接测试，再运行真实模型":"Complete the connection test before running the real model","请求失败:":"Request failed: ","请输入任务描述":"Please enter a task description","请输入大于 0 的预算":"Please enter a budget greater than 0","请输入行程描述":"Please enter a trip description","运行中…":"Running…","运行结果":"Run result","连接中…":"Connecting…","连接失败：":"Connection failed: ","连接成功：${res.model} · ${res.latency_ms} ms":"Connected: ${res.model} · ${res.latency_ms} ms","通过":"Passed","配置已保存，但尚未验证。请点击「测试连接」通过后再运行。":"Config saved but not verified yet. Click \"Test connection\" and wait for it to pass, then run.","预估花费":"Estimated cost","预算不足":"Insufficient budget","预算耗尽终止":"Stopped: budget exhausted","驳回":"Rejected","（留空沿用）":"(leave blank to keep)","（终止后未执行的部分不产生任何费用）":"(unexecuted steps after termination incur no cost)","本次编排":"Orchestration","审计":"Audit","对账":"Reconciliation","剩余":"Remaining","执行时间线":"Execution timeline","账本明细":"Ledger details","子任务输出":"Subtask outputs","轮次":"Round","服务":"Service","类别":"Category","开销":"Cost","质量":"Quality","未执行":"Not executed","失败":"Failed","缺损标记":"Gaps","被跳过":"Skipped","无成功记账记录":"No successful ledger entries","无成功子任务输出":"No successful subtask outputs","分解来源":"Decomposed by","记忆命中":"Memory hits","历史记忆命中":"Memory hit","真实 LLM":"Real LLM","模拟":"Simulation","工具调用":"Tool calls","冗余重复":"redundant repeats","Judge：完整性":"Judge: completeness","正确性":"correctness","综合":"Overall","超支":"Over budget","无服务调用":"No service calls","全程未超支":"Never overspent","次调用":"call","/ 次调用":"/ call","失败率":"Failure rate","条协作日志":"collaboration logs","低预算":"Low budget","预算":"Budget","本场最佳":"Best of the run","失败注入":"Failure injection","安排一趟 3 天的东京行程，体验优先":"Plan a 3-day trip to Tokyo, experience first","安排一趟 3 天的东京行程，兼顾体验与花费":"Plan a 3-day trip to Tokyo, balancing experience and cost","安排一趟 3 天的东京行程，穷游":"Plan a 3-day trip to Tokyo, budget travel"};
+/* ================= i18n: 中文 / English ================= */
+const I18N_EXTRA = {
+  "任务完成": "Task completed",
+  "未完成": "Not completed",
+  "✓ 任务完成": "✓ Task completed",
+  "✗ 未完成": "✗ Not completed",
+  "本场最佳": "Best of the run",
+  "超支": "Over budget",
+  "无服务调用": "No service calls",
+  "多 Agent": "Multi-Agent",
+  "条协作日志": " collaboration logs",
+  "工具调用": "Tool calls",
+  "冗余重复": "redundant repeats",
+  "Judge：完整性": "Judge: completeness",
+  "正确性": "correctness",
+  "综合": "Overall",
+  "次调用": "per call",
+  "失败率": "Failure rate",
+  "次（冗余重复": " calls (redundant repeats",
+  "/ 预算": "/ budget",
+  "本次编排": "Orchestration",
+  "审计": "Audit",
+  "对账": "Reconciliation",
+  "通过": "passed",
+  "驳回": "rejected",
+  "一致": "matched",
+  "异常": "mismatch",
+  "分解来源": "Decomposed by",
+  "记忆命中": "memory hits",
+  "历史记忆命中": "Memory hit",
+  "真实 LLM": "Real LLM",
+  "模拟": "Simulation",
+  "T01 · 调研2025年新能源汽车市场趋势并分析主要驱动因素": "T01 · Research 2025 EV market trends and analyze the main drivers",
+  "T02 · 检索三家主要竞争对手的定价策略并分析差异": "T02 · Search the pricing strategies of three major competitors and analyze the differences",
+  "T03 · 调研远程办公工具的企业采用情况并分析优缺点": "T03 · Research enterprise adoption of remote-work tools and analyze the pros and cons",
+  "T04 · 搜索云计算行业最新安全合规要求并分析其影响": "T04 · Search the latest security and compliance requirements for cloud computing and analyze their impact",
+  "T05 · 调研目标客户行业的采购决策流程并分析关键角色": "T05 · Research the procurement decision process in the target customer industry and analyze key roles",
+  "T06 · 解析季度财报文档并生成摘要报告": "T06 · Parse the quarterly financial report document and generate a summary report",
+  "T07 · 解析员工手册文档，生成入职培训摘要报告": "T07 · Parse the employee handbook and generate an onboarding training summary report",
+  "T08 · 解析供应商合同文档并生成风险摘要报告": "T08 · Parse the supplier contract document and generate a risk summary report",
+  "T09 · 解析客户反馈文档，生成问题汇总报告": "T09 · Parse the customer feedback document and generate an issue summary report",
+  "T10 · 解析Project周报文档并生成进度摘要报告": "T10 · Parse the Project weekly report document and generate a progress summary report",
+  "T10 · 解析项目周报文档并生成进度摘要报告": "T10 · Parse the project weekly report document and generate a progress summary report",
+  "T11 · 解析两份产品方案文档，分析差异并生成对比报告": "T11 · Parse two product proposal documents, analyze the differences, and generate a comparison report",
+  "T12 · 解析三家供应商报价文档，分析性价比并生成推荐报告": "T12 · Parse three supplier quotation documents, analyze cost-effectiveness, and generate a recommendation report",
+  "T13 · 解析上半年与下半年销售文档，分析变化趋势并生成对比报告": "T13 · Parse H1 and H2 sales documents, analyze the trend, and generate a comparison report",
+  "T14 · 解析两个版本的需求文档，分析变更点并生成差异报告": "T14 · Parse two versions of the requirements document, analyze the changes, and generate a difference report",
+  "T15 · 解析多份竞品白皮书文档，分析各自优势并生成对比报告": "T15 · Parse multiple competitor white papers, analyze their strengths, and generate a comparison report",
+  "T16 · 调研行业数据，分析市场机会并生成季度业务报告": "T16 · Research industry data, analyze market opportunities, and generate a quarterly business report",
+  "T17 · 调研客户反馈，分析满意度问题并生成改进报告": "T17 · Research customer feedback, analyze satisfaction issues, and generate an improvement report",
+  "T18 · 调研运营数据，分析成本结构并生成优化建议报告": "T18 · Research operational data, analyze the cost structure, and generate an optimization report",
+  "T19 · 调研销售渠道表现，分析转化率并生成月度业务报告": "T19 · Research sales channel performance, analyze conversion rates, and generate a monthly business report",
+  "T20 · 调研供应链风险，分析薄弱环节并生成应对报告": "T20 · Research supply chain risks, analyze weak points, and generate a response plan report",
+};
+Object.keys(I18N_EXTRA).forEach(k => {
+  if (!Object.prototype.hasOwnProperty.call(I18N_EN, k)) I18N_EN[k] = I18N_EXTRA[k];
+});
+
+const CJK_RE = /[\u4e00-\u9fff]/;
+const ORIG_TEXT = new WeakMap();
+const ORIG_ATTR = new WeakMap();
+const I18N_ATTRS = ["placeholder", "title", "aria-label"];
+const I18N_TEMPLATES = [];
+const I18N_PHRASES = [];
+let I18N_PHRASE_RE = null;
+let I18N_PHRASE_MAP = {};
+let LANG = "zh";
+const ORIG_TITLE = document.title;
+
+(function buildI18n() {
+  const esc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  for (const [zh, en] of Object.entries(I18N_EN)) {
+    if (!CJK_RE.test(zh)) continue;
+    if (zh.includes("${") && !/[<>]/.test(zh)) {
+      const names = [...zh.matchAll(/\$\{([^}]+)\}/g)].map(m => m[1]);
+      const parts = zh.split(/\$\{[^}]+\}/g);
+      const re = new RegExp("^" + parts.map(esc).join("(.+?)") + "$");
+      const enParts = String(en).split(/\$\{([^}]+)\}/g);
+      let out = "";
+      for (let i = 0; i < enParts.length; i++) {
+        if (i % 2 === 1) {
+          const idx = names.indexOf(enParts[i]);
+          out += idx >= 0 ? "$" + (idx + 1) : "";
+        } else out += enParts[i];
+      }
+      I18N_TEMPLATES.push({ re, out });
+      continue;
+    }
+    if (!/[<>${}]/.test(zh) && zh.length <= 24) I18N_PHRASES.push([zh, en]);
+  }
+  I18N_TEMPLATES.sort((a, b) => b.re.source.length - a.re.source.length);
+  I18N_PHRASES.sort((a, b) => b[0].length - a[0].length);
+  I18N_PHRASE_MAP = Object.fromEntries(I18N_PHRASES);
+  if (I18N_PHRASES.length) {
+    I18N_PHRASE_RE = new RegExp(I18N_PHRASES.map(([z]) => esc(z)).join("|"), "g");
+  }
+})();
+
+function i18nPiece(s) {
+  if (!CJK_RE.test(s)) return s;
+  if (Object.prototype.hasOwnProperty.call(I18N_EN, s)) return I18N_EN[s];
+  for (const t of I18N_TEMPLATES) {
+    const m = s.match(t.re);
+    if (m) return t.out.replace(/\$(\d+)/g, (_, n) => m[+n] || "");
+  }
+  let out = s;
+  if (I18N_PHRASE_RE) {
+    out = out.replace(I18N_PHRASE_RE, m => I18N_PHRASE_MAP[m] || m);
+  }
+  out = out
+    .replace(/(\d[\d,.]*)\s*次/g, "$1 calls")
+    .replace(/(\d[\d,.]*)\s*条/g, "$1 items")
+    .replace(/(\d[\d,.]*)\s*个/g, "$1")
+    .replace(/(\d[\d,.]*)\s*档/g, "$1 tiers")
+    .replace(/(\d[\d,.]*)\s*轮/g, "$1 rounds");
+  return out;
+}
+
+function translateText(text) {
+  const m = String(text).match(/^(\s*)([\s\S]*?)(\s*)$/);
+  if (!m || !CJK_RE.test(m[2])) return text;
+  const t = i18nPiece(m[2]);
+  return t === m[2] ? text : m[1] + t + m[3];
+}
+
+function i18nValue(el) {
+  if (!el || !("value" in el)) return;
+  const v = el.value;
+  if (!CJK_RE.test(v)) return;
+  let store = ORIG_ATTR.get(el);
+  if (!store) { store = {}; ORIG_ATTR.set(el, store); }
+  store.__value = v;
+  const t = i18nPiece(v);
+  if (t !== v) el.value = t;
+}
+
+function i18nAttrs(el) {
+  if (!el || el.nodeType !== 1) return;
+  for (const a of I18N_ATTRS) {
+    if (!el.hasAttribute(a)) continue;
+    const v = el.getAttribute(a);
+    if (!CJK_RE.test(v)) continue;
+    let store = ORIG_ATTR.get(el);
+    if (!store) { store = {}; ORIG_ATTR.set(el, store); }
+    store[a] = v;
+    const t = i18nPiece(v);
+    if (t !== v) el.setAttribute(a, t);
+  }
+  if (el.tagName === "OPTION" && el.hasAttribute("value")) {
+    const v = el.getAttribute("value");
+    if (CJK_RE.test(v)) {
+      let store = ORIG_ATTR.get(el);
+      if (!store) { store = {}; ORIG_ATTR.set(el, store); }
+      store.value = v;
+      const t = i18nPiece(v.trim());
+      if (t !== v.trim()) el.setAttribute("value", t);
+    }
+  }
+  if (el.tagName === "TEXTAREA" ||
+      (el.tagName === "INPUT" && /^(text|search|url|email|tel)$/.test(el.type))) {
+    i18nValue(el);
+  }
+}
+
+function i18nRestoreAttrs(el) {
+  const store = ORIG_ATTR.get(el);
+  if (!store) return;
+  for (const a of Object.keys(store)) {
+    if (a === "__value") continue;
+    el.setAttribute(a, store[a]);
+  }
+  if ("__value" in store) el.value = store.__value;
+  ORIG_ATTR.delete(el);
+}
+
+function i18nTree(root, lang) {
+  if (!root) return;
+  if (root.nodeType === 3) {
+    if (lang === "en") {
+      if (!ORIG_TEXT.has(root)) ORIG_TEXT.set(root, root.data);
+      const t = translateText(root.data);
+      if (t !== root.data) root.data = t;
+    } else if (ORIG_TEXT.has(root)) {
+      root.data = ORIG_TEXT.get(root);
+      ORIG_TEXT.delete(root);
+    }
+    return;
+  }
+  if (root.nodeType !== 1 && root.nodeType !== 9 && root.nodeType !== 11) return;
+  if (root.nodeType === 1 && /^(SCRIPT|STYLE|CODE|PRE)$/.test(root.tagName)) return;
+
+  const els = root.nodeType === 1
+    ? [root, ...root.querySelectorAll("*")]
+    : [...root.querySelectorAll("*")];
+  for (const el of els) {
+    if (el.closest && el.closest("[data-no-i18n]")) continue;
+    if (lang === "en") i18nAttrs(el);
+    else i18nRestoreAttrs(el);
+  }
+
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT, {
+    acceptNode(node) {
+      const p = node.parentElement;
+      if (!p) return NodeFilter.FILTER_ACCEPT;
+      if (/^(SCRIPT|STYLE|CODE|PRE)$/.test(p.tagName)) return NodeFilter.FILTER_REJECT;
+      if (p.closest("[data-no-i18n]")) return NodeFilter.FILTER_REJECT;
+      return NodeFilter.FILTER_ACCEPT;
+    }
+  });
+  let n;
+  while ((n = walker.nextNode())) {
+    if (lang === "en") {
+      if (!ORIG_TEXT.has(n)) ORIG_TEXT.set(n, n.data);
+      const t = translateText(n.data);
+      if (t !== n.data) n.data = t;
+    } else if (ORIG_TEXT.has(n)) {
+      n.data = ORIG_TEXT.get(n);
+      ORIG_TEXT.delete(n);
+    }
+  }
+}
+
+function setLang(lang, persist) {
+  LANG = lang === "en" ? "en" : "zh";
+  if (persist !== false) {
+    try { localStorage.setItem("budget_agent_lang", LANG); } catch (e) {}
+  }
+  document.documentElement.lang = LANG === "en" ? "en" : "zh-CN";
+  document.querySelectorAll("#langSwitch button").forEach(b =>
+    b.classList.toggle("on", b.dataset.lang === LANG));
+  i18nTree(document.body, LANG);
+  document.title = LANG === "en" ? i18nPiece(ORIG_TITLE) : ORIG_TITLE;
+}
+
+function initI18n() {
+  document.querySelectorAll("#langSwitch button").forEach(b =>
+    b.onclick = () => setLang(b.dataset.lang));
+  let initial = "zh";
+  try { initial = localStorage.getItem("budget_agent_lang") || "zh"; } catch (e) {}
+  const q = new URLSearchParams(location.search).get("lang");
+  if (q === "en" || q === "zh") initial = q;
+  setLang(initial, false);
+
+  const mo = new MutationObserver(muts => {
+    if (LANG !== "en") return;
+    for (const m of muts) {
+      if (m.type === "childList") {
+        m.addedNodes.forEach(n => i18nTree(n, "en"));
+      } else if (m.type === "attributes") {
+        i18nAttrs(m.target);
+      }
+    }
+  });
+  mo.observe(document.body, {
+    childList: true,
+    subtree: true,
+    attributes: true,
+    attributeFilter: I18N_ATTRS
+  });
+}
+
 const $ = id => document.getElementById(id);
 const ZH = { completed: "已完成", budget_exhausted: "预算耗尽终止", failed: "异常终止" };
 const TAG = { ok: "正常", downgraded: "降级", insufficient_budget: "预算不足" };
@@ -991,6 +1271,7 @@ function applySimScenario(mode) {
   $("simTravChips").style.display = travel ? "flex" : "none";
   $("simBudget").value = travel ? 800 : 1.00;
   $("simTask").value = "";
+  i18nValue($("simTask"));
   $("simTask").placeholder = travel
     ? "例如：安排一趟 3 天的东京行程，兼顾体验与花费"
     : "例如：调研行业数据，分析市场机会并生成季度业务报告";
@@ -999,9 +1280,9 @@ function applySimScenario(mode) {
 document.querySelectorAll("#simScenarioChips .chip").forEach(c =>
   c.onclick = () => applySimScenario(c.dataset.sc));
 
-$("simPreset").onchange = e => { if (e.target.value) $("simTask").value = e.target.value; };
+$("simPreset").onchange = e => { if (e.target.value) { $("simTask").value = e.target.value; i18nValue($("simTask")); } };
 $("simTPreset").onchange = e => {
-  if (e.target.value) $("simTask").value = e.target.value;
+  if (e.target.value) { $("simTask").value = e.target.value; i18nValue($("simTask")); }
   const opt = e.target.selectedOptions && e.target.selectedOptions[0];
   if (opt && opt.dataset.b) $("simBudget").value = opt.dataset.b;
 };
@@ -1164,7 +1445,7 @@ $("realRagChip").onclick = () => {
   realRag = !realRag;
   $("realRagChip").classList.toggle("on", realRag);
 };
-$("realPreset").onchange = e => { if (e.target.value) $("realTask").value = e.target.value; };
+$("realPreset").onchange = e => { if (e.target.value) { $("realTask").value = e.target.value; i18nValue($("realTask")); } };
 document.querySelectorAll("#realEntChips .chip[data-b]").forEach(c =>
   c.onclick = () => { $("realBudget").value = c.dataset.b; });
 
@@ -1532,6 +1813,7 @@ setMode("sim");
 applySimScenario("enterprise");
 loadLlmStatus();
 route();
+initI18n();
 </script>
 </body>
 </html>

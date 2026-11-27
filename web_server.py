@@ -168,17 +168,18 @@ class Handler(BaseHTTPRequestHandler):
         return task, budget, seed, payload
 
     def do_GET(self) -> None:
-        if self.path in ("/", "/index.html"):
+        path = self.path.split("?", 1)[0]
+        if path in ("/", "/index.html"):
             body = INDEX_HTML.read_bytes()
             self.send_response(200)
             self.send_header("Content-Type", "text/html; charset=utf-8")
             self.send_header("Content-Length", str(len(body)))
             self.end_headers()
             self.wfile.write(body)
-        elif self.path == "/api/tasks":
+        elif path == "/api/tasks":
             tasks, tiers = load_tasks()
             self._send_json({"tasks": tasks, "budget_tiers": tiers})
-        elif self.path == "/api/services":
+        elif path == "/api/services":
             rates = load_failure_rates()
             services = [
                 {
@@ -192,34 +193,35 @@ class Handler(BaseHTTPRequestHandler):
                 for s in ServiceRegistry().list_all()
             ]
             self._send_json({"services": services})
-        elif self.path == "/api/experiments":
+        elif path == "/api/experiments":
             datasets = {}
             for name in SUMMARY_CSVS:
-                path = RESULTS_DIR / name
-                if path.exists():
-                    with open(path, encoding="utf-8-sig", newline="") as f:
+                summary_path = RESULTS_DIR / name
+                if summary_path.exists():
+                    with open(summary_path, encoding="utf-8-sig", newline="") as f:
                         datasets[name] = list(csv.DictReader(f))
             self._send_json({"available": bool(datasets), "datasets": datasets})
-        elif self.path == "/api/llm/status":
+        elif path == "/api/llm/status":
             self._send_json(_llm_status())
-        elif self.path == "/favicon.ico":
+        elif path == "/favicon.ico":
             self.send_response(204)
             self.end_headers()
         else:
             self._send_json({"error": "not found"}, status=404)
 
     def do_POST(self) -> None:
-        if self.path == "/api/run":
+        path = self.path.split("?", 1)[0]
+        if path == "/api/run":
             self._handle_run()
-        elif self.path == "/api/compare":
+        elif path == "/api/compare":
             self._handle_compare()
-        elif self.path == "/api/travel":
+        elif path == "/api/travel":
             self._handle_travel()
-        elif self.path == "/api/llm/config":
+        elif path == "/api/llm/config":
             self._handle_llm_config()
-        elif self.path == "/api/llm/test":
+        elif path == "/api/llm/test":
             self._handle_llm_test()
-        elif self.path == "/api/llm/clear":
+        elif path == "/api/llm/clear":
             self._handle_llm_clear()
         else:
             self._send_json({"error": "not found"}, status=404)
