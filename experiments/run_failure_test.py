@@ -16,8 +16,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from src.agent_core import AgentOrchestrator
 from src.evaluation.evaluator import Evaluator, load_tasks
+from src.multi_agent.orchestrator import build_enterprise_multi_agent
 from src.simulated_services import DEFAULT_FAILURE_RATES, SimulatedServiceRunner
 
 RESULTS_DIR = Path(__file__).resolve().parent / "results"
@@ -46,10 +46,11 @@ def run(seed_base: int = 1000) -> None:
         }
         for tier_name, tier_budget in tiers.items():
             for i, t in enumerate(tasks):
-                agent = AgentOrchestrator(
+                agent = build_enterprise_multi_agent(
+                    seed=seed_base + i,
                     runner=SimulatedServiceRunner(
                         failure_rates=rates, seed=seed_base + i,
-                    )
+                    ),
                 )
                 rows.append(ev.run_single(agent, "proposed", t,
                                           tier_name, tier_budget))

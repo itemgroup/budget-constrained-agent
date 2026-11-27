@@ -1,109 +1,83 @@
-# 部署指南 · Budget Agent
+# 配置与启动
 
-本项目有两种形态，按需选择：
+## 一、配置方法
 
-| 形态 | 说明 | 适合 |
-|---|---|---|
-| **A. GitHub Pages 静态 Mock 主页** | 仅静态 HTML/JS，运行/行程/对比结果均为预置示例，实验数据为真实快照 | 在线展示项目效果 |
-| **B. 本地完整版** | 真实执行引擎 + DeepSeek LLM 分解与评分 + 图记忆持久化 + 完整交互 | 开发、实验、答辩演示 |
-
-仓库地址：https://github.com/itemgroup/budget-constrained-agent （工作分支 `develop`）
-
----
-
-## A. 部署 GitHub Pages 静态主页（约 1 分钟）
-
-`docs/index.html` 即静态 Mock 主页，启用 Pages 即可：
-
-1. 打开仓库 **Settings → Pages**
-2. **Build and deployment** 选择 **Deploy from a branch**
-3. Branch 选择 **`develop`**，目录选择 **`/docs`**，点击 **Save**
-4. 等待部署完成，访问：
-
-   **https://itemgroup.github.io/budget-constrained-agent/**
-
-也可以使用 GitHub CLI 一条命令启用（需管理员权限）：
-
-```bash
-gh api repos/itemgroup/budget-constrained-agent/pages -X POST -f "source[branch]=develop" -f "source[path]=/docs"
-```
-
-> 更新主页：修改 `docs/index.html` 后推送 `develop`，Pages 会自动重新部署。
-
----
-
-## B. 本地运行完整版
-
-### 1. 克隆与安装
+### 1. 运行环境
 
 ```powershell
-git clone https://github.com/itemgroup/budget-constrained-agent.git
-cd budget-constrained-agent
-git checkout develop
-
-# Python 3.10+（项目开发环境为 3.14），虚拟环境约定名为 budget_agent_env
 python -m venv budget_agent_env
-.\budget_agent_env\Scripts\Activate.ps1
+.\budget_agent_env\Scripts\activate
 python -m pip install -r requirements.txt
 ```
 
-### 2. 启动 Web UI（完整交互版）
+### 2. LLM 配置（两种方式，二选一）
+
+**方式 A：环境变量 / `.env` 文件**
+
+```powershell
+copy .env.example .env
+```
+
+编辑 `.env`：
+
+```
+DEEPSEEK_API_KEY=sk-your-key-here
+DEEPSEEK_BASE_URL=https://api.deepseek.com
+DEEPSEEK_MODEL=deepseek-chat
+```
+
+**方式 B：网页前端运行时配置**
+
+1. 启动网页界面，进入「运行」页；
+2. 在「真实 LLM 设置」卡片填写 Base URL / API Key / 模型；
+3. 点「保存配置」——只保存在本机进程内存，不落盘、不写 `.env`；
+4. 点「测试连接」——先做地址合规性校验（必须 https；主机需在白名单内；禁止私网 IP，
+   本机回环 `localhost` / `127.0.0.1` 可用 http），再发一次最小真实请求验证可达；
+5. 两项都通过后，勾选「使用真实 LLM」（需要参考历史任务时再勾选「参考历史任务」）。
+
+不配置或不勾选时，仍然使用模拟引擎，Mock 演示不受影响。
+
+### 3. 历史任务检索配置
+
+- 记录文件：`data/run_log.jsonl`，每次运行自动追加一条（任务、预算、花费、各步骤服务与结果）；
+- **只有真实 LLM 成功参与的运行才会进入检索库**，模拟运行 / 演示数据 / LLM 回退均不计入；
+- 默认后端 `tfidf`（纯标准库，离线、零下载、可复现）；
+- 可选向量后端：设置环境变量 `RAG_BACKEND=chroma`（需要 `chromadb`，
+  索引持久化在 `kb_chroma/`）；
+- `RAG_BACKEND=auto`（默认）：`kb_chroma/` 已建好时用 chroma，否则回退 tfidf。
+
+### 4. 预算与实验参数
+
+- 单次预算：网页输入框直接填写（也可点快捷胶囊），或命令行 `--budget`；
+- 三档预算（high / medium / low）：`src/evaluation/test_tasks.json` 的 `budget_tiers`。
+
+## 二、启动方法
+
+### 1. 网页界面（完整版）
 
 ```powershell
 python web_server.py
-# 打开 http://127.0.0.1:8000
 ```
 
-包含：单次运行、行程规划（实时报价单）、四方案对比、服务目录、实验数据、架构说明。
+浏览器打开 http://127.0.0.1:8000
 
-### 3. 命令行运行
-
-```powershell
-# 模拟分解器 + 模拟评分（无需任何 API key）
-python main.py run --task "调研行业数据，分析市场机会并生成季度业务报告" --budget 0.5 --seed 5
-
-# 真实 LLM（DeepSeek）任务分解 + LLM-Judge 评分
-python main.py run --task "调研行业数据，分析市场机会并生成季度业务报告" --budget 0.5 --seed 5 --llm
-```
-
-### 4.（可选）接入真实 LLM
-
-1. 在 https://platform.deepseek.com 申请 API key
-2. 复制 `.env.example` 为 `.env`，填入：
-
-   ```
-   DEEPSEEK_API_KEY=sk-你的key
-   ```
-
-3. 加 `--llm` 参数即可；**无 key 时自动回退模拟实现，不会报错**。
-
-### 5. 复现实验数据
+### 2. 命令行
 
 ```powershell
+# 单次运行（默认多 Agent 编排；--llm 启用真实 LLM；--rag 参考历史任务）
+python main.py run --task "调研行业数据并生成季度业务报告" --budget 0.5 --llm --rag
+
+# 批量实验
+python main.py experiment baselines
+python main.py experiment ablation
+python main.py experiment budget_sweep
+python main.py experiment failure_test
 python main.py experiment all
-# 产出 experiments/results/ 下 9 个 CSV（基线 / 消融 / 多预算 / 失败注入）
-# 单独运行：experiment baselines | ablation | budget_sweep | failure_test
 ```
 
-### 6. Demo 脚本速览
+### 3. 静态主页（GitHub Pages）
 
-| 脚本 | 演示内容 |
-|---|---|
-| `demo_agent_run.py` | 主循环双案例（正常完成 / 预算耗尽） |
-| `demo_travel.py` | 行程规划四档预算（含降级、满房重试、体面终止） |
-| `demo_memory.py` | 图记忆：相似任务命中后分解零 LLM 调用（`--fresh` 冷启动对照） |
-| `demo_eval.py` | 评估指标与 LLM-Judge |
-| `demo_replan.py` | 重规划 RETRY / SKIP / ABORT 全策略 |
+静态页不需要任何配置，也不提供 API Key 输入：
 
----
-
-## Mock 主页与完整版的差异
-
-| 能力 | Mock 主页（Pages） | 本地完整版 |
-|---|---|---|
-| 页面视觉与分区 | ✅ 一致 | ✅ |
-| 运行 / 行程 / 对比结果 | 预置示例 | 真实引擎计算 |
-| 实验数据 | 真实实验快照（内嵌） | 实时读取最新 CSV |
-| 自定义任务与预算 | 表单仅供预览 | 完全可调 |
-| DeepSeek LLM 分解 / 评分 | ❌ | ✅（`--llm`） |
-| 图记忆持久化 | ❌（仅架构展示） | ✅（`data/experience_graph.json`） |
+仓库 Settings → Pages → 分支 `develop`、目录 `/docs` → Save，
+访问 https://itemgroup.github.io/budget-constrained-agent/

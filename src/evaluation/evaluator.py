@@ -18,7 +18,11 @@ import json
 from dataclasses import asdict, dataclass
 from pathlib import Path
 
-from ..agent_core import AgentOrchestrator, AgentState, RunReport
+from ..agent_core import AgentState, RunReport
+from ..multi_agent.orchestrator import (
+    MultiAgentOrchestrator,
+    build_enterprise_multi_agent,
+)
 from ..replanner import ReplanAction, ReplanResult
 from ..service_registry import ServiceRegistry
 from ..service_selector import (
@@ -26,7 +30,7 @@ from ..service_selector import (
     SelectionResult,
     SelectionStatus,
 )
-from ..simulated_services import ServiceResult, SimulatedServiceRunner
+from ..simulated_services import ServiceResult
 from ..task_planner import Subtask, TaskPlanner
 from .llm_judge import LLMJudge
 
@@ -156,47 +160,50 @@ class TaskRunMetrics:
 
 # ---------- 智能体装配 ----------
 
-def build_agent(name: str, seed: int | None = None) -> AgentOrchestrator:
-    """按名称装配基线/完整版智能体（proposal 3.4）。"""
+def build_agent(name: str, seed: int | None = None) -> MultiAgentOrchestrator:
+    """按名称装配基线/完整版智能体（proposal 3.4）。
+
+    所有方案统一走多 agent 编排（调研 / 询价 / 执行 / 审计），
+    差异只在决策策略：完整版用预算感知选择 + 动态重规划，
+    基线分别用质量优先、最低价、硬停止且不做重规划。
+    """
     registry = ServiceRegistry()
-    runner = SimulatedServiceRunner(seed=seed)
     if name == "standard":
-        return AgentOrchestrator(
-            selector=_QualityFirstSelector(registry),
-            runner=runner, replanner=_NoReplanner(), registry=registry,
+        return build_enterprise_multi_agent(
+            seed=seed or 0, registry=registry,
+            selector=_QualityFirstSelector(registry), replanner=_NoReplanner(),
         )
     if name == "min_cost":
-        return AgentOrchestrator(
-            selector=_MinCostSelector(registry),
-            runner=runner, replanner=_NoReplanner(), registry=registry,
+        return build_enterprise_multi_agent(
+            seed=seed or 0, registry=registry,
+            selector=_MinCostSelector(registry), replanner=_NoReplanner(),
         )
     if name == "hard_stop":
-        return AgentOrchestrator(
-            selector=_HardStopSelector(registry),
-            runner=runner, replanner=_NoReplanner(), registry=registry,
+        return build_enterprise_multi_agent(
+            seed=seed or 0, registry=registry,
+            selector=_HardStopSelector(registry), replanner=_NoReplanner(),
         )
     if name == "proposed":
-        return AgentOrchestrator(runner=runner, registry=registry)
+        return build_enterprise_multi_agent(seed=seed or 0, registry=registry)
     raise ValueError(f"未知智能体: {name}（可选: {AGENT_NAMES}）")
 
 
-def build_ablation_agent(name: str, seed: int | None = None) -> AgentOrchestrator:
-    """按名称装配消融变体（proposal 3.6）。"""
+def build_ablation_agent(name: str, seed: int | None = None) -> MultiAgentOrchestrator:
+    """按名称装配消融变体（proposal 3.6），同样基于多 agent 编排。"""
     registry = ServiceRegistry()
-    runner = SimulatedServiceRunner(seed=seed)
     if name == "full":
-        return AgentOrchestrator(runner=runner, registry=registry)
+        return build_enterprise_multi_agent(seed=seed or 0, registry=registry)
     if name == "no_budget_aware_selection":
         # 禁用预算感知选择：无降级，质量优先，付不起即停
-        return AgentOrchestrator(
+        return build_enterprise_multi_agent(
+            seed=seed or 0, registry=registry,
             selector=_HardStopSelector(registry),
-            runner=runner, registry=registry,
         )
     if name == "no_dynamic_replanning":
         # 禁用动态重规划：任何失败/质量不足直接终止
-        return AgentOrchestrator(
-            selector=BudgetAwareSelector(registry),
-            runner=runner, replanner=_NoReplanner(), registry=registry,
+        return build_enterprise_multi_agent(
+            seed=seed or 0, registry=registry,
+            selector=BudgetAwareSelector(registry), replanner=_NoReplanner(),
         )
     raise ValueError(f"未知消融变体: {name}（可选: {ABLATION_NAMES}）")
 
@@ -219,7 +226,7 @@ class Evaluator:
 
     def run_single(
         self,
-        agent: AgentOrchestrator,
+        agent: MultiAgentOrchestrator,
         agent_name: str,
         task_entry: dict,
         tier_name: str,

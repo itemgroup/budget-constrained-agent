@@ -165,11 +165,15 @@ _FAIL_REASONS = ("已满房", "已售罄", "报价已失效", "库存不足")
 
 
 class BookingRunner:
-    """把"执行服务"语义换成"预订选项"的模拟执行器。
+    """把"执行服务"语义换成"安排行程选项"的模拟执行器。
 
-    - 预订成功：扣该选项本次报价（cost = service.cost_per_call），
-      产出预订确认文本 + 体验描述；
-    - 预订失败（按售罄率随机）：不扣费（cost=0.0），与主场景语义一致；
+    本项目不接入任何真实支付：所谓"扣费"只是把该选项的报价计入模拟账本，
+    用于评估预算策略，不产生任何真实交易。
+
+    - 安排成功：计入该选项本次报价（cost = service.cost_per_call），
+      产出方案说明 + 体验描述；
+    - 安排失败（按售罄率随机，模拟"方案不可用"）：不计费（cost=0.0）；
+    - 预算不足时选择器会在调用前终止，因此不会出现"先花钱后失败"；
     - 与 BudgetLedger 解耦：记账由上层 AgentOrchestrator 完成。
     """
 
@@ -191,8 +195,9 @@ class BookingRunner:
         return ServiceResult(
             success=True,
             output=(
-                f"已预订「{service.name}」[{service.service_type}]，"
-                f"实际消费 ${service.cost_per_call:.2f}，体验评分 {service.quality_score:.2f}。"
+                f"已安排「{service.name}」[{service.service_type}]，"
+                f"预估价 ${service.cost_per_call:.2f}（模拟核算，无真实支付），"
+                f"体验评分 {service.quality_score:.2f}。"
                 f"{service.description}"
             ),
             cost=service.cost_per_call,

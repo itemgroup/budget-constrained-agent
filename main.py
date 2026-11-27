@@ -7,8 +7,7 @@
 
 import argparse
 
-from src.agent_core import AgentOrchestrator, RunReport
-from src.simulated_services import SimulatedServiceRunner
+from src.agent_core import RunReport
 
 
 def _print_report(report: RunReport) -> None:
@@ -34,26 +33,66 @@ def cmd_run(args: argparse.Namespace) -> None:
     planner = None
     judge = None
     if args.llm:
-        # 真实 LLM（DeepSeek）：任务分解 + 结果评分；
-        # 无 DEEPSEEK_API_KEY 时两者各自回退到模拟实现
+        # 真实 LLM：任务分解 + 结果评分；无 DEEPSEEK_API_KEY 时各自回退模拟实现
         from src.evaluation.llm_judge import RealLLMJudge
         from src.llm_task_planner import LLMTaskPlanner
 
-        planner = LLMTaskPlanner()
+        rag = None
+        if args.rag:
+            from src.rag import RAGRetriever
+
+            rag = RAGRetriever()
+            info = rag.stats()
+            print(f"[RAG] 后端={info['backend']} 记录={info['records']} "
+                  f"（已过滤 mock {info['mock_skipped']} 条）")
+
+        planner = LLMTaskPlanner(rag=rag)
         judge = RealLLMJudge()
-    agent = AgentOrchestrator(
-        planner=planner,
-        runner=SimulatedServiceRunner(seed=args.seed),
+    # 多 Agent 编排（默认且唯一形态）：调研 -> 询价 -> 分解 -> 主循环 -> 审计
+    from src.multi_agent.orchestrator import build_enterprise_multi_agent
+
+    multi_agent = build_enterprise_multi_agent(
+        seed=args.seed, planner=planner, judge=judge,
         max_steps=args.max_steps,
     )
-    report = agent.run(args.task, args.budget)
+    report = multi_agent.run(args.task, args.budget)
     _print_report(report)
-    if judge is not None:
-        planned = len(report.outputs) + len(report.skipped_subtasks)
-        s = judge.score(args.task, report.outputs, planned)
-        print(f"LLM-Judge: completeness={s.completeness:.2f} "
-              f"correctness={s.correctness:.2f} overall={s.overall:.2f}")
-        print(f"评分说明: {s.rationale}")
+    if planner is not None:
+        if planner.llm_success:
+            source = "真实 LLM"
+        elif planner.llm_calls:
+            source = "模拟（LLM 调用失败回退）"
+        else:
+            source = "模拟"
+        print(f"分解来源: {source}（LLM 调用 {planner.llm_calls} 次，"
+              f"记忆命中 {planner.memory_hits} 次）")
+        hits = getattr(planner, "last_rag_hits", [])
+        if hits:
+            print(f"历史任务参考: 匹配 {len(hits)} 条"
+                  f"（最高相似度 {hits[0].score:.2f}）")
+    audit = report.audit_report
+    if audit is not None:
+        print(f"审计: {'通过' if audit.passed else '驳回'} | "
+              f"对账 {'一致' if audit.reconciliation_ok else '异常'} | "
+              f"格式问题 {len(audit.format_errors)} 项")
+        if audit.score is not None:
+            print(f"Judge: completeness={audit.score.completeness:.2f} "
+                  f"correctness={audit.score.correctness:.2f} "
+                  f"overall={audit.score.overall:.2f}")
+        print(f"审计说明: {audit.reason}")
+    roles = "、".join(sorted({m.agent for m in report.messages}))
+    print(f"协作日志 {len(report.messages)} 条 | 参与 agent: {roles}")
+    try:
+        from src.run_log import append_run, record_from_report
+
+        real_llm = bool(planner is not None
+                        and getattr(planner, "llm_success", False))
+        append_run(record_from_report(
+            args.task, args.budget, report, None, report.audit_report,
+            mode="llm" if real_llm else "mock",
+        ))
+    except Exception:  # noqa: BLE001 - 记录失败不影响运行
+        pass
 
 
 def cmd_experiment(args: argparse.Namespace) -> None:
@@ -93,7 +132,9 @@ def main() -> None:
     p_run.add_argument("--seed", type=int, default=0, help="随机种子（可复现）")
     p_run.add_argument("--max-steps", type=int, default=20, help="最大轮次上限")
     p_run.add_argument("--llm", action="store_true",
-                       help="用真实 LLM（DeepSeek）做任务分解与结果评分")
+                       help="用真实 LLM（OpenAI 兼容端点）做任务分解与结果评分")
+    p_run.add_argument("--rag", action="store_true",
+                       help="分解前参考历史任务记录（需配合 --llm）")
 
     p_exp = sub.add_parser("experiment", help="运行批量实验")
     p_exp.add_argument("name", choices=[

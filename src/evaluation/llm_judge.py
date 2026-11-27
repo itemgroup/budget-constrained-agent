@@ -93,25 +93,44 @@ class RealLLMJudge:
         model: str = "deepseek-chat",
         temperature: float = 0.0,
         fallback: bool = True,
+        config=None,
     ) -> None:
+        """config 为 LLMConfig（前端运行时配置，优先）；缺省读环境变量。"""
         load_dotenv()
         self.fallback = fallback
         self._chain = None
-        api_key = os.environ.get("DEEPSEEK_API_KEY")
-        if not api_key:
-            if not fallback:
-                raise RuntimeError("未找到 DEEPSEEK_API_KEY（请在 .env 中配置）")
-            return
+
+        if config is not None:
+            cfg = config
+        else:
+            api_key = os.environ.get("DEEPSEEK_API_KEY")
+            if not api_key:
+                if not fallback:
+                    raise RuntimeError(
+                        "未找到 DEEPSEEK_API_KEY（请在 .env 中配置，"
+                        "或在前端 LLM 配置中填写）"
+                    )
+                return
+            from ..llm_config import LLMConfig
+
+            cfg = LLMConfig(
+                base_url=os.environ.get("DEEPSEEK_BASE_URL",
+                                        "https://api.deepseek.com"),
+                api_key=api_key,
+                model=os.environ.get("DEEPSEEK_MODEL", model),
+                temperature=temperature,
+            )
+        self.config = cfg
 
         from langchain_core.output_parsers import StrOutputParser
         from langchain_core.prompts import ChatPromptTemplate
         from langchain_openai import ChatOpenAI
 
         llm = ChatOpenAI(
-            model=model,
-            api_key=api_key,
-            base_url="https://api.deepseek.com",
-            temperature=temperature,
+            model=cfg.model,
+            api_key=cfg.api_key,
+            base_url=cfg.base_url,
+            temperature=cfg.temperature if cfg.temperature else temperature,
         )
         prompt = ChatPromptTemplate.from_template(_JUDGE_PROMPT)
         self._chain = prompt | llm | StrOutputParser()
