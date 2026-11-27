@@ -39,7 +39,7 @@ DEEPSEEK_MODEL=deepseek-chat
 
 ### 3. 历史任务检索配置
 
-- 记录文件：`data/run_log.jsonl`，每次运行自动追加一条（任务、预算、花费、各步骤服务与结果）；
+- 记录文件：`data/mock/run_log.jsonl`，每次运行自动追加一条（任务、预算、花费、各步骤服务与结果）；
 - **只有真实 LLM 成功参与的运行才会进入检索库**，模拟运行 / 演示数据 / LLM 回退均不计入；
 - 默认后端 `tfidf`（纯标准库，离线、零下载、可复现）；
 - 可选向量后端：设置环境变量 `RAG_BACKEND=chroma`（需要 `chromadb`，

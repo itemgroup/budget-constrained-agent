@@ -12,7 +12,7 @@
   （各步骤历史上表现最好的服务，供后续选择器/多 agent 参考）；
 - add_experience / record_run_outputs：写入新经验；运行结束后回填
   「哪类步骤实际由哪个服务完成、质量/开销如何」，图越用越准；
-- JSON 持久化（data/experience_graph.json），进程重启后经验仍在；
+- JSON 持久化（data/mock/experience_graph.json），进程重启后经验仍在；
 - 内置 threading.Lock，多 agent 并发读写安全（为多智能体黑板做准备）。
 
 零第三方依赖（re/json/threading 标准库），不接入向量库；
@@ -29,7 +29,9 @@ from pathlib import Path
 
 from .task_planner import Subtask
 
-DEFAULT_MEMORY_PATH = Path(__file__).resolve().parent.parent / "data" / "experience_graph.json"
+DEFAULT_MEMORY_PATH = (
+    Path(__file__).resolve().parent.parent / "data" / "mock" / "experience_graph.json"
+)
 
 #: 词面相似度命中阈值（0~1；bigram Jaccard）
 DEFAULT_SIMILARITY_THRESHOLD = 0.55

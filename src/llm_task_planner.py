@@ -9,7 +9,7 @@
 - estimated_cost 不信任 LLM，按类别最低服务价从注册表确定性填充；
 - 两级缓存省 token：实例内精确缓存（同任务字符串只调一次 LLM）+ 图结构
   长期记忆（src/memory.py，跨实例/跨运行的精确与相似命中均跳过 LLM 调用，
-  并把每次分解经验持久化到 data/experience_graph.json）；use_memory=False 时
+  并把每次分解经验持久化到 data/mock/experience_graph.json）；use_memory=False 时
   跳过图记忆，确保真实模型被实际调用；
 - RAG（src/rag.py）：注入 retriever 后，分解前先检索知识库，把相关切片
   作为「参考资料」拼进提示词；检索结果是本地数据，不额外计费；

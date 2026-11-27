@@ -395,6 +395,8 @@
   details.raw-card summary::-webkit-details-marker { display: none; }
   details.raw-card summary::after { content: "展开"; font-size: 12px; color: var(--accent); font-weight: 500; }
   details.raw-card[open] summary::after { content: "收起"; }
+  html[lang="en"] details.raw-card summary::after { content: "Show"; }
+  html[lang="en"] details.raw-card[open] summary::after { content: "Hide"; }
   .raw-body { padding-bottom: 18px; }
   .hbar-wrap { margin: 6px 0 18px; }
   .hbar { display: flex; align-items: center; gap: 10px; margin: 7px 0; font-size: 13px; }

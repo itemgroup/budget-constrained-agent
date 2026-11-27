@@ -122,7 +122,7 @@ def case_memory() -> None:
     budget, seed = 0.50, 5
 
     # 每次进程用独立的记忆文件，保证「第一次未命中、第二次命中」可复现
-    mem_path = Path("data") / f"multi_agent_demo_{time.time_ns()}.json"
+    mem_path = Path("data") / "mock" / f"multi_agent_demo_{time.time_ns()}.json"
     memory = ExperienceGraph(path=mem_path)
 
     print("\n  第 1 次运行（冷启动）")
@@ -145,7 +145,7 @@ def case_memory() -> None:
 
     print(f"\n  经验图规模: {memory.stats()['nodes']} · "
           f"累计命中 {memory.stats()['total_hits']}")
-    print(f"  记忆文件: {mem_path}（data/ 已 gitignore）")
+    print(f"  记忆文件: {mem_path}（data/mock/ 已 gitignore）")
 
 
 if __name__ == "__main__":

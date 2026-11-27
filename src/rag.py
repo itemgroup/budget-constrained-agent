@@ -1,6 +1,6 @@
 """Retrieval over historical task runs (RAG for future tasks).
 
-检索对象是**历史任务运行记录**（src/run_log.py 落盘的 data/run_log.jsonl），
+检索对象是**历史任务运行记录**（src/run_log.py 落盘的 data/mock/run_log.jsonl），
 而不是任何静态文档：每次运行结束都会沉淀一条记录，下一次遇到相似任务时，
 先检索"以前这类任务怎么拆、花了多少钱、选了哪些服务"，作为分解与选型的参考。
 

@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-RUN_LOG_PATH = ROOT / "data" / "run_log.jsonl"
+RUN_LOG_PATH = ROOT / "data" / "mock" / "run_log.jsonl"
 
 _LOCK = threading.Lock()
 
