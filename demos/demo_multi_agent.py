@@ -6,13 +6,16 @@
 - 案例 3：图记忆 —— 同一任务跑两次，第二次调研阶段命中记忆、分解零 LLM。
 
 运行方式（项目根目录下）：
-    python demo_multi_agent.py
+    python demos/demo_multi_agent.py
 """
 
 from __future__ import annotations
 
+import sys
 import time
 from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent_core import AgentOrchestrator
 from src.memory import ExperienceGraph
@@ -122,7 +125,8 @@ def case_memory() -> None:
     budget, seed = 0.50, 5
 
     # 每次进程用独立的记忆文件，保证「第一次未命中、第二次命中」可复现
-    mem_path = Path("data") / "mock" / f"multi_agent_demo_{time.time_ns()}.json"
+    mem_path = (Path(__file__).resolve().parent.parent / "data" / "mock"
+                / f"multi_agent_demo_{time.time_ns()}.json")
     memory = ExperienceGraph(path=mem_path)
 
     print("\n  第 1 次运行（冷启动）")

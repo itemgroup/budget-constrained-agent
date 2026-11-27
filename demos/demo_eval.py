@@ -5,8 +5,13 @@
 另附消融变体（full / 禁预算感知选择 / 禁动态重规划）汇总。
 
 运行方式（项目根目录下）：
-    python demo_eval.py
+    python demos/demo_eval.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.evaluation.evaluator import (
     AGENT_NAMES,

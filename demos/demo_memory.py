@@ -14,13 +14,16 @@
 第二次运行本脚本时，第 1/3 步也会直接命中磁盘记忆——持久化生效。
 
 运行方式（项目根目录下）：
-    .\\budget_agent_env\\Scripts\\python.exe demo_memory.py --fresh   # 清空记忆冷启动
-    .\\budget_agent_env\\Scripts\\python.exe demo_memory.py           # 带历史记忆运行
+    .\\budget_agent_env\\Scripts\\python.exe demos\\demo_memory.py --fresh   # 清空记忆冷启动
+    .\\budget_agent_env\\Scripts\\python.exe demos\\demo_memory.py           # 带历史记忆运行
 """
 
 from __future__ import annotations
 
 import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent_core import AgentOrchestrator
 from src.llm_task_planner import LLMTaskPlanner

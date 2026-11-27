@@ -4,8 +4,13 @@
 四个模块的对接。以下为固定顺序的演示流程，不是完整 Agent 循环。
 
 运行方式（项目根目录下）：
-    python demo_plan_select.py
+    python demos/demo_plan_select.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.budget_manager import BudgetLedger
 from src.service_registry import ServiceRegistry

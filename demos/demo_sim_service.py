@@ -4,8 +4,13 @@
 本 demo 不涉及账本记账，仅观察执行层行为。
 
 运行方式（项目根目录下）：
-    python demo_sim_service.py
+    python demos/demo_sim_service.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.service_registry import ServiceRegistry
 from src.simulated_services import SimulatedServiceRunner

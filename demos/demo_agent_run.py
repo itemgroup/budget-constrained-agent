@@ -5,8 +5,13 @@
        后续子任务预算不足 -> 预算耗尽终止（BUDGET_EXHAUSTED）。
 
 运行方式（项目根目录下）：
-    python demo_agent_run.py
+    python demos/demo_agent_run.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent_core import AgentOrchestrator, RunReport
 from src.simulated_services import DEFAULT_FAILURE_RATES, SimulatedServiceRunner

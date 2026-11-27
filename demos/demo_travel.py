@@ -11,10 +11,15 @@
 先打印报价单再执行，模拟"agent 自主查询价格后再安排"。
 
 运行方式（项目根目录下）：
-    .\\budget_agent_env\\Scripts\\python.exe demo_travel.py
+    .\\budget_agent_env\\Scripts\\python.exe demos\\demo_travel.py
 """
 
 from __future__ import annotations
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.agent_core import AgentState
 from src.scenarios.scenario import (

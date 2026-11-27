@@ -4,8 +4,13 @@
 降级重试）、SKIP、ABORT 三种处理策略。
 
 运行方式（项目根目录下）：
-    python demo_replan.py
+    python demos/demo_replan.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.replanner import Replanner
 from src.service_registry import ServiceRegistry

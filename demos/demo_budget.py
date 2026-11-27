@@ -1,8 +1,13 @@
 """Demo：手动模拟 3 次服务调用，打印预算账本消耗明细。
 
 运行方式（在项目根目录下）：
-    python demo_budget.py
+    python demos/demo_budget.py
 """
+
+import sys
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from src.budget_manager import BudgetLedger
 from src.service_registry import ServiceRegistry
