@@ -957,6 +957,27 @@ const I18N_EXTRA = {
   "历史记忆命中": "Memory hit",
   "真实 LLM": "Real LLM",
   "模拟": "Simulation",
+  "预算紧张": "Tight budget",
+  "满足最低质量": "meets the minimum quality",
+  "满足最低": "meets the minimum ",
+  "满足质量": "meeting quality",
+  "满足": "meeting ",
+  "的服务": "services",
+  "均不可支付": " are all unaffordable",
+  "降级为": "downgraded to",
+  "降级方案执行成功": "the downgraded plan succeeded",
+  "方案执行成功": " plan succeeded",
+  "接受结果": "accepting the result",
+  "在可支付服务中选质量最高者": "picked the highest-quality affordable service",
+  "质量达标": "quality met",
+  "达标": " met",
+  "子任务完成": "subtask complete",
+  "预算不足": "Insufficient budget",
+  "类别最低价格为": "category lowest price is",
+  "剩余预算": "remaining budget",
+  "所有子任务执行完毕": "All subtasks completed",
+  "模拟输出": "Simulated output",
+  "子任务": "subtask",
   "T01 · 调研2025年新能源汽车市场趋势并分析主要驱动因素": "T01 · Research 2025 EV market trends and analyze the main drivers",
   "T02 · 检索三家主要竞争对手的定价策略并分析差异": "T02 · Search the pricing strategies of three major competitors and analyze the differences",
   "T03 · 调研远程办公工具的企业采用情况并分析优缺点": "T03 · Research enterprise adoption of remote-work tools and analyze the pros and cons",
@@ -1039,7 +1060,13 @@ function i18nPiece(s) {
     .replace(/(\d[\d,.]*)\s*条/g, "$1 items")
     .replace(/(\d[\d,.]*)\s*个/g, "$1")
     .replace(/(\d[\d,.]*)\s*档/g, "$1 tiers")
-    .replace(/(\d[\d,.]*)\s*轮/g, "$1 rounds");
+    .replace(/(\d[\d,.]*)\s*轮/g, "$1 rounds")
+    .replace(/：/g, ": ")
+    .replace(/；/g, "; ")
+    .replace(/，/g, ", ")
+    .replace(/。/g, ". ")
+    .replace(/（/g, " (")
+    .replace(/）/g, ")");
   return out;
 }
 
